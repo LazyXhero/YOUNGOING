@@ -181,11 +181,52 @@ const SEV=['輕微','中','嚴重'];                       /* 一般症狀的程
 const OPT={'鼻水':['微','中','多','濃'],'發燒':['低燒','中度','高燒'],'排便':['正常','偏硬','偏軟']};  /* 特別的症狀選項 */
 /* 需要再往下選的症狀:每一層都是單選 */
 const DEEPSYM={
- '換牙':[['位置',['上面','下面']],['牙齒種類',['門牙','側門牙','犬齒','小臼齒','臼齒','大臼齒']]],
+ '換牙':[['位置',['上面','下面']],['乳牙／恆牙',['乳牙','恆牙']],['牙齒',c=>c[1]==='乳牙'?T_BABY:c[1]==='恆牙'?T_PERM:[]],['左右',['右','左']]],
  '月經':[['狀態',['開始','持續','結束']],['經量',['少','中','多']]]
 };
 const LIMBDEEP=[['左右',['左','右','雙側']],['程度',SEV]];   /* 四肢的所有症狀都會先選左右 */
 const deepOf=(n,p1)=>DEEPSYM[n]||(p1==='四肢'?LIMBDEEP:null);
+/* ============ 換牙資料 ============ */
+const T_PERM=['中門牙','側門牙','犬齒','第一小臼齒','第二小臼齒','第一大臼齒','第二大臼齒','智齒'];
+const T_BABY=['乳中門牙','乳側門牙','乳犬齒','第一乳臼齒','第二乳臼齒'];
+/* 恆牙(第二次長出)大約幾歲長出:[上排, 下排] */
+const AGE_PERM={'中門牙':['7-8 歲','6-7 歲'],'側門牙':['8-9 歲','7-8 歲'],'犬齒':['11-12 歲','9-10 歲'],'第一小臼齒':['10-12 歲','10-12 歲'],'第二小臼齒':['11-12 歲','11-12 歲'],'第一大臼齒':['6-7 歲(六歲齒)','6-7 歲(六歲齒)'],'第二大臼齒':['12-13 歲','12-13 歲'],'智齒':['16 歲以後','16 歲以後']};
+/* 乳牙(第一次長出)[長出, 脫落]:[上排, 下排] */
+const AGE_BABY={'乳中門牙':[['8-12 個月','6-7 歲'],['6-10 個月','6-7 歲']],'乳側門牙':[['9-13 個月','7-8 歲'],['10-16 個月','7-8 歲']],'乳犬齒':[['16-22 個月','10-12 歲'],['17-23 個月','9-12 歲']],'第一乳臼齒':[['13-19 個月','9-11 歲'],['14-18 個月','9-11 歲']],'第二乳臼齒':[['25-33 個月','10-12 歲'],['23-31 個月','10-12 歲']]};
+function toothHint(c){
+  const pos=c[0],st=c[1],t=c[2];if(!pos||!st||!t)return '';
+  const pi=pos==='下面'?1:0;
+  if(st==='恆牙'&&AGE_PERM[t])return `${pos}${t}:恆牙大約 ${AGE_PERM[t][pi]} 長出來`;
+  if(st==='乳牙'&&AGE_BABY[t]){const a=AGE_BABY[t][pi];return `${pos}${t}:乳牙大約 ${a[0]} 長出,大約 ${a[1]} 脫落,之後長恆牙`}
+  return '';
+}
+function toothPanel(c,mode){
+  const perm=mode==='恆牙',names=perm?T_PERM:T_BABY;
+  const ws=perm?[13,11,12,13,13,18,18,17]:[18,15,18,24,27];
+  const hs=perm?[17,17,19,20,20,23,23,22]:[22,22,24,28,30];
+  const TC=perm?['#d4b483','#ffb347','#ff6b81','#5eead4','#4cc3ff','#5b9dff','#b78cff','#c084fc']:['#d4b483','#ffb347','#ff6b81','#4cc3ff','#5b9dff'];
+  const xs=[];let acc=0;ws.forEach(w=>{xs.push(acc+w/2);acc+=w+2});
+  const k=88/(xs[xs.length-1]*xs[xs.length-1]);
+  let g=`<text x="180" y="16" text-anchor="middle" fill="#d4b483" font-weight="700" font-size="13">上面</text><text x="180" y="330" text-anchor="middle" fill="#d4b483" font-weight="700" font-size="13">下面</text><text x="12" y="172" fill="#8d8a84" font-size="12">孩子的右</text><text x="348" y="172" text-anchor="end" fill="#8d8a84" font-size="12">孩子的左</text><text x="180" y="176" text-anchor="middle" fill="#6a6862" font-size="11">(面對孩子看)</text>`;
+  ['上面','下面'].forEach(pos=>{
+    const up=pos==='上面';
+    [-1,1].forEach(side=>{
+      names.forEach((nm,i)=>{
+        const X=xs[i],x=180+side*X,y=up?(48+k*X*X):(292-k*X*X);
+        const th=Math.atan((up?1:-1)*side*2*k*X)*180/Math.PI;
+        const sd=side<0?'右':'左';
+        const on=c[0]===pos&&c[1]===mode&&c[2]===nm&&c[3]===sd;
+        const col=TC[i];
+        g+=`<g data-tt="1" data-pos="${pos}" data-st="${mode}" data-name="${nm}" data-side="${sd}" style="cursor:pointer"><rect x="${(-ws[i]/2).toFixed(1)}" y="${(-hs[i]/2).toFixed(1)}" width="${ws[i]}" height="${hs[i]}" rx="5" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${th.toFixed(1)})" fill="${col}" fill-opacity="${on?1:.2}" stroke="${on?'#fff':col}" stroke-width="${on?3:2}"><title>${pos}${sd===''?'':'孩子的'+sd}${nm}</title></rect><text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" fill="${on?'#14110c':'#f1ede6'}" font-size="11" font-weight="700" pointer-events="none">${i+1}</text></g>`;
+      });
+    });
+  });
+  const rows=names.map((nm,i)=>{
+    if(perm)return `<tr><td>${i+1} ${nm}</td><td>${AGE_PERM[nm][0]}</td><td>${AGE_PERM[nm][1]}</td></tr>`;
+    const a=AGE_BABY[nm];return `<tr><td>${i+1} ${nm}</td><td>長出 ${a[0][0]}<br>脫落 ${a[0][1]}</td><td>長出 ${a[1][0]}<br>脫落 ${a[1][1]}</td></tr>`;
+  }).join('');
+  return `<div class="card" style="margin:6px 0 10px"><div class="ch"><b>牙齒圖</b><span class="chips"><button type="button" class="chip sm ${perm?'on':''}" data-tm="恆牙">恆牙(第二次)</button><button type="button" class="chip sm ${perm?'':'on'}" data-tm="乳牙">乳牙(第一次)</button></span></div><div class="note" style="margin:0 0 6px">點圖上的牙齒就會自動選好;數字是從中間往兩邊數第幾顆</div><svg viewBox="0 0 360 336" width="100%" role="img">${g}</svg><div class="tbl" style="margin-top:8px"><table><tr><th>牙齒</th><th>上排${perm?'長出':''}</th><th>下排${perm?'長出':''}</th></tr>${rows}</table></div><div class="note">年齡只是大概,每個孩子不太一樣。乳牙(第一次長出)脫落後,恆牙(第二次)才會長出來。</div></div>`;
+}
 const EYE=['眨眼','飄眼','眼睛癢','紅腫','流淚','眼屎多','視力模糊','怕光'];
 const LIMB=['扭傷','麻','痠痛','腫脹','瘀青','無力','抽筋'];
 const SKIN=['紅疹','癢','乾燥','脫皮','濕疹','蚊蟲叮咬','傷口'];
@@ -546,12 +587,24 @@ function openForm(key,row,mode='new'){
   String(val('症狀')).split('、').filter(Boolean).forEach(e=>{const [n,o]=parseSym(e);sel[n]=o});
   if(s.hasPart){
     const H1=F.elements['症狀部位大項'],H2=F.elements['症狀部位細項'];
+    let toothOpen=false,toothMode='恆牙';
     const drawSyms=()=>{
       const box=$('#syms');if(!box)return;
       const base=(PARTS[H1.value]&&PARTS[H1.value].sub[H2.value])||[];
       const list=[...base,...Object.keys(sel).filter(k=>!base.includes(k))];
       if(!list.length){box.innerHTML=`<div class="note">${H2.value?'這個細項沒有預設症狀,請在「其他說明」填寫':'請先選上面的部位大項與細項'}</div>`;return}
-      box.innerHTML=list.map(n=>{const D=deepOf(n,H1.value);if(D){const cur=(sel[n]||'').split('/');return `<div class="sx"><div class="sn">${esc(n)}</div><div style="flex:1;min-width:0">${D.map((lv,li)=>`<div class="so" style="margin:3px 0"><span class="lbl">${lv[0]}</span>${lv[1].map(o=>`<button type="button" class="opt ${cur[li]===o?'on':''}" data-s="${esc(n)}" data-lv="${li}" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div>`).join('')}</div></div>`}const opts=OPT[n]||SEV;return `<div class="sx"><div class="sn">${esc(n)}</div><div class="so">${opts.map((o,i)=>`<button type="button" class="opt ${sel[n]===o?'on':''}" style="--c:${optColor(i,opts.length)}" data-s="${esc(n)}" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>`}).join('');
+      box.innerHTML=list.map(n=>{
+        const D=deepOf(n,H1.value);
+        if(D){
+          const cur=(sel[n]||'').split('/');
+          const lv=D.map((l,li)=>{const opts=typeof l[1]==='function'?l[1](cur):l[1];return `<div class="so" style="margin:3px 0"><span class="lbl">${l[0]}</span>${opts.length?opts.map(o=>`<button type="button" class="opt ${cur[li]===o?'on':''}" data-s="${esc(n)}" data-lv="${li}" data-o="${esc(o)}">${esc(o)}</button>`).join(''):'<span class="note" style="margin:0">請先選上一層</span>'}</div>`}).join('');
+          let extra='';
+          if(n==='換牙'){const h=toothHint(cur);extra=(h?`<div class="note" style="margin:4px 0">${h}</div>`:'')+`<button type="button" class="btn sec sm" data-tb="1" style="margin-top:4px">${toothOpen?'收起牙齒圖':'牙齒圖與換牙時間表'}</button>`}
+          return `<div class="sx"><div class="sn">${esc(n)}</div><div style="flex:1;min-width:0">${lv}${extra}</div></div>${n==='換牙'&&toothOpen?toothPanel(cur,toothMode):''}`;
+        }
+        const opts=OPT[n]||SEV;
+        return `<div class="sx"><div class="sn">${esc(n)}</div><div class="so">${opts.map((o,i)=>`<button type="button" class="opt ${sel[n]===o?'on':''}" style="--c:${optColor(i,opts.length)}" data-s="${esc(n)}" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>`;
+      }).join('');
     };
     const drawParts=()=>{
       $('#pp').innerHTML=Object.keys(PARTS).map(p=>`<button type="button" class="chip pc ${H1.value===p?'on':''}" style="--c:${pcol(p)}" data-p1="${esc(p)}">${picon(p,18)}${p}</button>`).join('');
@@ -560,10 +613,16 @@ function openForm(key,row,mode='new'){
     };
     drawParts();drawSyms();
     F.addEventListener('click',e=>{
-      const a=e.target.closest('[data-p1]'),c=e.target.closest('[data-p2]'),o=e.target.closest('[data-s]');
+      const a=e.target.closest('[data-p1]'),c=e.target.closest('[data-p2]'),o=e.target.closest('[data-s]'),tt=e.target.closest('[data-tt]'),tb=e.target.closest('[data-tb]'),tm=e.target.closest('[data-tm]');
       if(a){if(H1.value!==a.dataset.p1){H1.value=a.dataset.p1;H2.value='';sel={};const subs=Object.keys(PARTS[H1.value].sub);if(subs.length===1)H2.value=subs[0]}drawParts();drawSyms()}
       else if(c){if(H2.value!==c.dataset.p2){H2.value=c.dataset.p2;sel={}}drawParts();drawSyms()}
-      else if(o){const n=o.dataset.s,v=o.dataset.o;if(o.dataset.lv!==undefined){const cur=(sel[n]||'').split('/');while(cur.length<2)cur.push('');const li=+o.dataset.lv;cur[li]=cur[li]===v?'':v;const j=cur.join('/');if(j==='/')delete sel[n];else sel[n]=j.replace(/\/$/,'')}else if(sel[n]===v)delete sel[n];else sel[n]=v;drawSyms()}
+      else if(o){const n=o.dataset.s,v=o.dataset.o;
+        if(o.dataset.lv!==undefined){const D=deepOf(n,H1.value),cur=(sel[n]||'').split('/');while(cur.length<D.length)cur.push('');const li=+o.dataset.lv;cur[li]=cur[li]===v?'':v;for(let q=li+1;q<D.length;q++)if(typeof D[q][1]==='function')cur[q]='';const j=cur.join('/');if(/^\/*$/.test(j))delete sel[n];else sel[n]=j.replace(/\/+$/,'')}
+        else if(sel[n]===v)delete sel[n];else sel[n]=v;
+        drawSyms()}
+      else if(tb){toothOpen=!toothOpen;drawSyms()}
+      else if(tm){toothMode=tm.dataset.tm;drawSyms()}
+      else if(tt){const d=tt.dataset;sel['換牙']=[d.pos,d.st,d.name,d.side].join('/');drawSyms()}
     });
   }
   const calc=()=>{const e=F.elements['BMI'];if(e)e.value=bmi(F.elements['身高'].value,F.elements['體重'].value)};
