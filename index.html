@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<title>養序</title>
+<style>
+:root{--bg:#0a0a0b;--card:#141416;--card2:#1a1a1d;--ink:#f1ede6;--mut:#8d8a84;--pri:#d4b483;--pri2:rgba(212,180,131,.12);--on:#14110c;--warn:#ff7a7a;--warn2:rgba(255,122,122,.12);--line:#27272b;--r:14px}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;color-scheme:dark}
+body{margin:0;font:15px/1.55 -apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei","微軟正黑體",sans-serif;background:var(--bg);color:var(--ink);background-image:radial-gradient(900px 400px at 85% -10%,rgba(212,180,131,.08),transparent 60%)}
+h1,h3,small{font-size:inherit}
+button{font:inherit;cursor:pointer}
+.ic{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px}
+header{position:sticky;top:0;z-index:20;background:rgba(10,10,11,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+header h1{font-weight:700;margin:0;flex:1;min-width:120px;color:var(--pri);display:flex;align-items:center;gap:8px}
+header select{font:inherit;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:var(--card2);color:var(--ink);max-width:140px;width:auto}
+#sync{background:transparent;border-radius:20px;padding:5px 12px;border:1px solid var(--line);color:var(--mut)}
+nav{position:sticky;top:57px;z-index:19;background:var(--bg);border-bottom:1px solid var(--line);display:flex;overflow-x:auto;padding:0 8px;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:0 0 auto;border:0;background:none;padding:12px 12px;color:var(--mut);border-bottom:2px solid transparent;white-space:nowrap;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+nav button.on{color:var(--ink);border-color:var(--pri)}
+.wrap{max-width:980px;margin:0 auto;padding:14px 14px 90px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.bar input[type=search],.bar input[type=date]{flex:1;min-width:130px}
+input,select,textarea{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card2);color:var(--ink)}
+input::placeholder,textarea::placeholder{color:#5f5d59}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px var(--pri2)}
+input[readonly]{background:#101012;color:var(--mut)}
+.btn{border:1px solid var(--pri);border-radius:10px;padding:9px 16px;background:var(--pri);color:var(--on);font-weight:700}
+.btn.sec{background:transparent;color:var(--pri);border-color:rgba(212,180,131,.4)}
+.btn.warn{background:transparent;color:var(--warn);border-color:rgba(255,122,122,.35)}
+.btn.sm{padding:5px 11px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:6px 13px;color:var(--ink);font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--pri);border-color:var(--pri);color:var(--on)}
+.chip.pc{--c:#9aa0a6}
+.chip.pc.on{background:color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c);color:var(--ink)}
+.chip small{opacity:.7;margin-left:2px;font-weight:400}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px;scrollbar-width:none}
+.filters .chip{flex:0 0 auto}
+.dh{margin:18px 2px 8px;font-weight:700;color:var(--pri)}
+.card{background:var(--card);border-radius:var(--r);padding:13px 15px;margin-bottom:9px;border:1px solid var(--line)}
+.card-h{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.card-h b{margin-right:auto}
+.tag{background:#222226;border-radius:20px;padding:2px 10px;color:var(--mut);display:inline-flex;align-items:center;gap:5px}
+.tag .ic{width:16px;height:16px;vertical-align:middle}
+.tag.part{font-weight:700}
+.tag.sv{background:transparent;border:1px solid;font-weight:700}
+.kvs{display:flex;flex-wrap:wrap;gap:6px 16px}
+.kv i{font-style:normal;color:var(--mut);margin-right:5px}
+.kv.bad{color:var(--warn);font-weight:600}
+.note{color:var(--mut);margin-top:4px;white-space:pre-wrap}
+.acts{display:flex;gap:6px;margin-top:10px}
+.empty{text-align:center;color:var(--mut);padding:44px 10px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.fld label{display:block;color:var(--mut);margin-bottom:4px}
+.fld label small{color:var(--pri)}
+.full{grid-column:1/-1}
+.gh{font-weight:700;color:var(--pri);margin-top:8px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.sx{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:6px}
+.sx .sn{font-weight:700;min-width:5.5em}
+.so{display:flex;gap:6px;flex-wrap:wrap}
+.opt{--c:#d4b483;border:1px solid var(--line);background:var(--card2);color:var(--ink);border-radius:20px;padding:4px 14px;font-weight:700}
+.opt.on{background:color-mix(in srgb,var(--c) 25%,transparent);border-color:var(--c);color:var(--c)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(3px);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal[hidden]{display:none}
+.sheet{background:var(--card);border:1px solid var(--line);width:100%;max-width:760px;max-height:94vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column}
+@media(min-width:760px){.modal{align-items:center}.sheet{border-radius:20px}}
+.sh{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);color:var(--pri);font-weight:700}
+.sh button{border:0;background:none;color:var(--mut)}
+.mbody{overflow:auto;padding:16px 18px;flex:1}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+details.grp{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--bg)}
+details.grp>summary{padding:11px 13px;font-weight:700;cursor:pointer;list-style:none;display:flex;gap:8px;align-items:center}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary .cnt{margin-left:auto;font-weight:400;color:var(--mut)}
+details.grp[open]>summary{border-bottom:1px solid var(--line);background:var(--pri2);border-radius:12px 12px 0 0}
+.items{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 12px;padding:12px}
+.it{display:flex;flex-direction:column}
+.it label{color:var(--mut)}
+.it .row{display:flex;gap:4px}
+.flag{border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:0 9px;color:#6a6862;font-weight:700;white-space:nowrap}
+.flag.on{background:var(--warn2);border-color:var(--warn);color:var(--warn)}
+.it.bad input{border-color:var(--warn);background:var(--warn2)}
+.it.hide{display:none}
+.tbl{overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.tbl table{border-collapse:collapse;width:100%}
+.tbl th,.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+.tbl th{background:#1d1b17;color:var(--pri);position:sticky;top:0}
+.tbl td:first-child,.tbl th:first-child{position:sticky;left:0;background:var(--card);font-weight:600}
+.tbl th:first-child{background:#1d1b17}
+.tbl td.bad{color:var(--warn);font-weight:700}
+.tbl tr.gr td{background:#19181a;font-weight:700}
+.home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.qa{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 4px;text-align:center;color:var(--ink);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px}
+.qa .ic{width:28px;height:28px}
+.qa:active{background:var(--pri2)}
+.stat{display:flex;gap:8px;margin-bottom:14px}
+.stat div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center}
+.stat b{display:block;color:var(--pri)}
+.stat small{color:var(--mut)}
+h3{margin:20px 0 9px;font-weight:700;color:var(--pri)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--pri);color:var(--on);font-weight:600;padding:9px 20px;border-radius:30px;z-index:99;opacity:0;transition:.25s;pointer-events:none;max-width:90vw}
+#toast.on{opacity:.97}
+.pr{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 13px;margin-bottom:6px}
+.pr b{flex:1}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#2e2e33;border-radius:8px}
+@media(max-width:520px){.items,.grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="logo"></h1>
+  <select id="who" aria-label="切換人員"></select>
+  <button id="sync" data-act="sync"></button>
+</header>
+<nav id="nav"></nav>
+<main class="wrap" id="main"></main>
+<div class="modal" id="modal" hidden><div class="sheet"><div class="sh"><span id="mt"></span><button data-act="close" aria-label="關閉">×</button></div><div class="mbody" id="mbody"></div><div class="mfoot" id="mfoot"></div></div></div>
+<div id="toast"></div>
+
+<script>
+/* ============ 基本工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const p2=n=>String(n).padStart(2,'0');
+const TODAY=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
+const NOW=()=>{const d=new Date();return p2(d.getHours())+':'+p2(d.getMinutes())};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const WD=['日','一','二','三','四','五','六'];
+const wday=d=>{const t=new Date(d+'T00:00:00');return isNaN(t)?'':'(週'+WD[t.getDay()]+')'};
+const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch(e){return d}};
+const SV=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+let toastT;const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)};
+
+/* ============ 圖示(SVG,不會亂碼)與顏色 ============ */
+const ICON={
+leaf:'<path d="M5 19C5 9 10 5 20 5c0 9-4 14-12 14"/><path d="M5 19c3-5 6-8 10-10"/>',
+home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+vitals:'<path d="M3 12h4l2-6 4 12 2-6h6"/>',
+diet:'<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 7c0-2 2-2 2-4M14 7c0-2 2-2 2-4"/>',
+meds:'<rect x="2.5" y="8" width="19" height="8" rx="4" transform="rotate(-45 12 12)"/><path d="M9 9l6 6"/>',
+symptoms:'<path d="M10 4a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z"/><path d="M12 9v7"/>',
+visits:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/>',
+checkup:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 14l2 2 4-4"/>',
+settings:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+brain:'<path d="M12 4v16"/><path d="M12 6a3 3 0 0 0-6 1 3 3 0 0 0-2 4 3 3 0 0 0 2 4 3 3 0 0 0 6 2"/><path d="M12 6a3 3 0 0 1 6 1 3 3 0 0 1 2 4 3 3 0 0 1-2 4 3 3 0 0 1-6 2"/>',
+eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ent:'<path d="M7 10a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 1"/><path d="M10 10a2 2 0 0 1 4 0"/>',
+lungs:'<path d="M12 3v9"/><path d="M12 8C9 8 5 10 5 16c0 3 1 4 3 4s4-1 4-4"/><path d="M12 8c3 0 7 2 7 8 0 3-1 4-3 4s-4-1-4-4"/>',
+heart:'<path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.5A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/>',
+stomach:'<path d="M9 3v4c0 3-5 3-5 9a5 5 0 0 0 5 5c6 0 11-3 11-9 0-4-4-4-5-7V3"/>',
+liver:'<path d="M3 10c0-3 3-4 7-4h6c3 0 5 2 5 5 0 5-5 8-10 8-5 0-8-4-8-9z"/><path d="M13 10c1 2 3 3 5 3"/>',
+kidney:'<path d="M9 3C5 3 3 7 3 11c0 5 3 10 7 10 2 0 3-1.5 3-3.5 0-2 2-2.5 2-5C15 7 12 3 9 3z"/><path d="M9 9c-1 1-1 3 0 4"/>',
+bone:'<path d="M7 17L17 7"/><circle cx="5.5" cy="15.5" r="2.5"/><circle cx="8.5" cy="18.5" r="2.5"/><circle cx="15.5" cy="5.5" r="2.5"/><circle cx="18.5" cy="8.5" r="2.5"/>',
+skin:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="14.5" cy="9" r="1" fill="currentColor"/><circle cx="13" cy="14.5" r="1" fill="currentColor"/><circle cx="8.5" cy="14" r="1" fill="currentColor"/>',
+body:'<circle cx="12" cy="5" r="2.5"/><path d="M12 8v7M7 11l5-2 5 2M9 21l3-6 3 6"/>',
+other:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="16" cy="12" r="1.2" fill="currentColor"/>',
+drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+flask:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/>',
+female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
+virus:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/>'
+};
+const ICOL={leaf:'#d4b483',home:'#d4b483',vitals:'#ff6b81',diet:'#9be564',meds:'#4cc3ff',symptoms:'#ffb347',visits:'#5eead4',checkup:'#b78cff',settings:'#c9c9c9',
+brain:'#b78cff',eye:'#4cc3ff',ent:'#ffb347',lungs:'#5eead4',heart:'#ff6b81',stomach:'#ffd166',liver:'#d9955f',kidney:'#5b9dff',bone:'#9be564',skin:'#ff9ecb',body:'#e8e2d6',other:'#9aa0a6',drop:'#ff4d6d',flask:'#f4a259',female:'#ff8fb8',virus:'#c084fc'};
+const ic=(k,c,sz)=>`<svg class="ic" viewBox="0 0 24 24" style="color:${c||ICOL[k]||'currentColor'}${sz?`;width:${sz}px;height:${sz}px`:''}">${ICON[k]||''}</svg>`;
+$('#logo').innerHTML=ic('leaf','#d4b483',24)+'養序';
+
+/* ============ 症狀選單(可自行增減:部位 → 細項 → 症狀) ============ */
+const SEV=['輕微','中','嚴重'];                       /* 一般症狀的程度選項 */
+const OPT={'鼻水':['微','中','多','濃'],'發燒':['低燒','中度','高燒'],'排便':['正常','偏硬','偏軟']};  /* 特別的症狀選項 */
+const PARTS={
+'腦／神經':{i:'brain',sub:{'頭部':['頭痛','頭暈'],'神經':['眨眼','飄眼','抽肚','扭脖'],'睡眠':['失眠','疲累']}},
+'眼睛':{i:'eye',sub:{'右眼':['眨眼','飄眼','眼睛癢','紅腫'],'左眼':['眨眼','飄眼','眼睛癢','紅腫'],'雙眼':['眨眼','飄眼','眼睛癢','紅腫']}},
+'耳鼻喉':{i:'ent',sub:{'鼻腔':['鼻水','乾鼻涕','鼻血','鼻塞','打噴嚏'],'喉嚨':['喉嚨痛','喉嚨癢','聲音沙啞'],'耳朵':['耳朵痛','耳鳴'],'口腔':['口腔潰瘍','牙痛']}},
+'肺／呼吸':{i:'lungs',sub:{'氣管':['乾咳','咳痰'],'支氣管':['乾咳','咳痰','喘鳴'],'肺部':['胸悶','呼吸急促']}},
+'心／循環':{i:'heart',sub:{'心臟':['心悸','胸痛','疲累'],'血管':['頭暈','手腳冰冷']}},
+'腸胃':{i:'stomach',sub:{'胃':['嘔吐','噁心','胃痛','脹氣'],'小腸':['抽肚','腹痛'],'大腸':['腹瀉','便秘','排便'],'肛門':['排便','便血']}},
+'肝膽':{i:'liver',sub:{'肝臟':['疲累','右上腹痛'],'膽囊':['右上腹痛']}},
+'腎／泌尿':{i:'kidney',sub:{'腎臟':['腰痠'],'膀胱':['頻尿'],'尿道':['排尿疼痛']}},
+'肌肉骨骼':{i:'bone',sub:{'頸部':['扭脖','脖子痛'],'肩背':['痠痛'],'腰':['痠痛'],'手':['痠痛','扭傷'],'腳':['痠痛','扭傷'],'關節':['疼痛','腫脹']}},
+'皮膚':{i:'skin',sub:{'臉':['紅疹','癢','乾燥'],'軀幹':['紅疹','癢','乾燥'],'四肢':['紅疹','癢','乾燥']}},
+'全身':{i:'body',sub:{'全身':['發燒','疲累','食慾差'],'精神':['精神差','煩躁'],'體溫':['發燒']}},
+'其他':{i:'other',sub:{'其他':[]}}
+};
+const pcol=p=>ICOL[(PARTS[p]||{}).i]||'#9aa0a6';
+const picon=(p,sz)=>PARTS[p]?ic(PARTS[p].i,null,sz):'';
+const OC={2:['#7bd88f','#ff7a7a'],3:['#7bd88f','#ffd166','#ff7a7a'],4:['#7bd88f','#ffd166','#ff9a5c','#ff7a7a']};
+const optColor=(i,n)=>(OC[n]||OC[3])[Math.min(i,(OC[n]||OC[3]).length-1)];
+function parseSym(e){const m=String(e).match(/^(.+?)\((.+)\)$/);return m?[m[1],m[2]]:[String(e),''];}
+function symTag(e){
+  const [n,o]=parseSym(e);const opts=OPT[n]||SEV;const i=opts.indexOf(o);
+  const c=o&&i>=0?optColor(i,opts.length):'#d4b483';
+  return `<span class="tag sv" style="color:${c}">${esc(n)}${o?' · '+esc(o):''}</span>`;
+}
+const symTags=s=>String(s||'').split('、').filter(Boolean).map(symTag).join('');
+
+/* ============ 資料欄位定義 ============ */
+const SEC={
+people:{sheet:'人員',label:'人員',nodate:true,nameText:true,fields:[{k:'性別',t:'sel',o:['','男','女']},{k:'生日',t:'date'},{k:'備註',t:'area'}]},
+vitals:{sheet:'身體數值',label:'身體數值',i:'vitals',fields:[
+ {k:'時間',t:'time'},
+ {g:'身形'},{k:'身高',u:'cm'},{k:'體重',u:'kg'},{k:'BMI',auto:1},{k:'胸圍',u:'cm'},{k:'腰圍',u:'cm'},{k:'臀圍',u:'cm'},
+ {g:'眼睛'},{k:'右眼視力',step:'0.1'},{k:'左眼視力',step:'0.1'},
+ {g:'心血管'},{k:'收縮壓',u:'mmHg'},{k:'舒張壓',u:'mmHg'},{k:'脈搏',u:'bpm'},
+ {k:'備註',t:'area'}]},
+diet:{sheet:'飲食飲水',label:'飲食飲水',i:'diet',unique:1,fields:[
+ {g:'三餐'},{k:'早餐',t:'text',full:1},{k:'中餐',t:'text',full:1},{k:'晚餐',t:'text',full:1},
+ {g:'其他飲食'},{k:'飲料',t:'text',full:1},{k:'加工食品',t:'text',full:1},{k:'炸物',t:'text',full:1},
+ {g:'飲水'},{k:'飲水',u:'ml',water:1},
+ {k:'備註',t:'area'}]},
+meds:{sheet:'用藥紀錄',label:'用藥紀錄',i:'meds',hasPart:1,again:1,fields:[
+ {k:'時間',t:'time'},{k:'部位',t:'part'},{k:'藥品',t:'text',full:1},{k:'劑量',t:'text'},{k:'備註',t:'area'}]},
+visits:{sheet:'就診紀錄',label:'就診紀錄',i:'visits',hasPart:1,fields:[
+ {k:'部位',t:'part'},{k:'醫院名稱',t:'text',full:1},{k:'診斷與醫囑',t:'area'},{k:'備註',t:'area'}]},
+symptoms:{sheet:'身體狀況',label:'身體狀況',i:'symptoms',hasPart:1,again:1,fields:[
+ {k:'部位',t:'part'},{k:'症狀',t:'chips'},{k:'其他說明',t:'text',full:1},{k:'備註',t:'area'}]},
+checkup:{sheet:'健檢紀錄',label:'健康檢查',i:'checkup',date:'健檢日期'}
+};
+const CK=[
+['基本體格','body',[['身高','cm'],['體重','kg'],['BMI',''],['胸圍','cm'],['腰圍','cm'],['臀圍','cm']]],
+['腦神經／眼睛','brain',[['右眼視力',''],['左眼視力','']]],
+['心血管','heart',[['收縮壓','mmHg'],['舒張壓','mmHg'],['脈搏','bpm'],['心電圖','','t'],['膽固醇','mg/dL'],['三酸甘油脂','mg/dL'],['高密度脂蛋白','mg/dL'],['低密度脂蛋白','mg/dL']]],
+['血液','drop',[['白血球','10³/µL'],['紅血球','10⁶/µL'],['血小板','10³/µL'],['血紅素','g/dL'],['血球容積比','%'],['平均紅血球容積','fL'],['平均紅血球血色素濃度','g/dL'],['平均紅血球血色素','pg'],['中性球','%'],['嗜伊紅性球','%'],['鹼性球','%'],['淋巴球','%'],['單核球','%']]],
+['代謝／內分泌','flask',[['飯前血糖','mg/dL'],['醣化血色素','%'],['促甲狀腺素TSH','µIU/mL']]],
+['肺部','lungs',[['胸部X光','','t'],['低劑量肺部斷層掃描LDC','','t']]],
+['腸胃','stomach',[['腹部超音波','','t'],['上消化道攝影','','t'],['下消化道攝影','','t']]],
+['肝膽','liver',[['總膽紅素','mg/dL'],['直接膽紅素','mg/dL'],['總血清蛋白','g/dL'],['白蛋白','g/dL'],['球蛋白','g/dL'],['肝功能AST','U/L'],['肝功能ALT','U/L'],['鹼性磷酸酶','U/L'],['r-GT','U/L'],['B型肝炎表面抗原','','t'],['B型肝炎表面抗體','','t'],['C型肝炎抗體','','t']]],
+['腎臟／泌尿','kidney',[['尿素氮','mg/dL'],['肌酸酐','mg/dL'],['腎絲球過濾率','mL/min'],['尿酸','mg/dL'],['尿液紅血球','','t'],['尿液白血球','','t'],['尿液表皮細胞','','t'],['尿液結晶體','','t'],['尿液圓柱體','','t'],['尿蛋白','','t'],['尿液細菌','','t'],['酸鹼值',''],['比重',''],['尿膽紅素','','t'],['尿膽素原','','t'],['泌尿','','t']]],
+['骨骼','bone',[['骨質密度','','t']]],
+['婦科／乳房','female',[['骨盆','','t'],['子宮頸抹片','','t'],['乳房X光','','t'],['乳房攝影','','t']]],
+['腫瘤指標／病毒','virus',[['甲型胎兒蛋白','ng/mL'],['癌胚胎抗原','ng/mL'],['前列腺特異抗原','ng/mL'],['腫瘤指標CA-199','U/mL'],['腫瘤指標CA-125','U/mL'],['腫瘤指標CA-153','U/mL'],['EB病毒VCA IgA抗體','','t']]]
+];
+const CKITEMS=CK.flatMap(g=>g[2].map(i=>({k:i[0],u:i[1],t:i[2]||'n',g:g[0]})));
+
+const dkOf=s=>s.nodate?null:(s.date||'日期');
+const fieldKeys=s=>(s.fields||[]).flatMap(f=>f.g?[]:f.t==='part'?['症狀部位大項','症狀部位細項']:[f.k]);
+function HEADERS(){
+  const H={};
+  for(const k in SEC){const s=SEC[k];
+    if(k==='checkup')H[s.sheet]=['id','健檢日期','姓名','健檢醫院','方案費用',...CKITEMS.map(i=>i.k),'異常項目','備註'];
+    else if(k==='people')H[s.sheet]=['id','姓名',...fieldKeys(s)];
+    else H[s.sheet]=['id',dkOf(s),'姓名',...fieldKeys(s)];}
+  return H;
+}
+
+/* ============ 狀態與儲存 ============ */
+/* 把 Apps Script 網頁應用程式網址貼在下面的引號中(貼好就不用再到設定頁輸入) */
+const SCRIPT_URL='';
+let cfg=LS('hr_cfg',{url:'',token:'',person:''});
+if(SCRIPT_URL)cfg.url=SCRIPT_URL;
+let DB=LS('hr_db',{});let Q=LS('hr_q',[]);
+let UI={tab:'home',f:{},cmp:false};
+let lastErr='',flushing=false;
+Object.values(SEC).forEach(s=>{DB[s.sheet]=DB[s.sheet]||[]});
+const persons=()=>(DB['人員']||[]).map(r=>r['姓名']).filter(Boolean);
+const saveCfg=()=>SV('hr_cfg',cfg);
+function putRow(sheet,o){const a=DB[sheet]=DB[sheet]||[];const i=a.findIndex(r=>r.id===o.id);if(i>=0)a[i]=o;else a.push(o);SV('hr_db',DB);enqueue({action:'upsert',sheet,row:o})}
+function delRow(sheet,id){DB[sheet]=(DB[sheet]||[]).filter(r=>r.id!==id);SV('hr_db',DB);enqueue({action:'delete',sheet,id})}
+function enqueue(op){
+  Q=Q.filter(x=>!(x.sheet===op.sheet&&(x.row?x.row.id:x.id)===(op.row?op.row.id:op.id)&&x.action==='upsert'));
+  Q.push(op);SV('hr_q',Q);flush();
+}
+async function api(method,payload){
+  if(method==='GET'){const u=new URL(cfg.url);u.searchParams.set('action',payload.action);if(cfg.token)u.searchParams.set('token',cfg.token);const r=await fetch(u);return r.json()}
+  const r=await fetch(cfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,token:cfg.token})});
+  return r.json();
+}
+async function flush(){
+  if(!cfg.url||flushing||!Q.length){badge();return}
+  flushing=true;lastErr='';badge();
+  const n=Q.length;
+  try{const res=await api('POST',{action:'batch',ops:Q.slice(0,n)});if(!res.ok)throw new Error(res.error||'失敗');Q=Q.slice(n);SV('hr_q',Q)}
+  catch(e){lastErr=e.message||'連線失敗'}
+  flushing=false;badge();
+  if(!lastErr&&Q.length)flush();
+}
+async function pull(silent){
+  if(!cfg.url){if(!silent)toast('尚未設定 Google Sheet 網址');return false}
+  await flush();
+  if(Q.length){toast('還有資料待同步,請稍後再試');return false}
+  try{
+    const i=await api('POST',{action:'init',headers:HEADERS()});if(!i.ok)throw new Error(i.error);
+    const r=await api('GET',{action:'all'});if(!r.ok)throw new Error(r.error);
+    DB=r.data;Object.values(SEC).forEach(s=>{DB[s.sheet]=DB[s.sheet]||[]});SV('hr_db',DB);
+    if(!silent)toast('已從 Sheet 載入');render();return true;
+  }catch(e){lastErr=e.message;badge();if(!silent)toast('讀取失敗:'+e.message);return false}
+}
+function badge(){
+  const b=$('#sync');
+  if(!cfg.url)b.textContent='未連線';
+  else if(flushing)b.textContent='同步中…';
+  else if(lastErr)b.textContent='同步失敗(點此重試)';
+  else if(Q.length)b.textContent='待同步 '+Q.length;
+  else b.textContent='已同步';
+}
+
+/* ============ 畫面骨架 ============ */
+const TABS=[['home','home','總覽'],['vitals','vitals','數值'],['diet','diet','飲食'],['meds','meds','用藥'],['symptoms','symptoms','症狀'],['visits','visits','就診'],['checkup','checkup','健檢'],['settings','settings','設定']];
+function render(){
+  if(cfg.person&&!persons().includes(cfg.person)){cfg.person='';saveCfg()}
+  const w=$('#who');
+  w.innerHTML='<option value="">全部成員</option>'+persons().map(n=>`<option ${n===cfg.person?'selected':''}>${esc(n)}</option>`).join('');
+  $('#nav').innerHTML=TABS.map(t=>`<button class="${UI.tab===t[0]?'on':''}" data-act="tab" data-t="${t[0]}">${ic(t[1])}${t[2]}</button>`).join('');
+  badge();
+  const m=$('#main');
+  if(UI.tab==='home')m.innerHTML=homeHTML();
+  else if(UI.tab==='settings')m.innerHTML=settingsHTML();
+  else{m.innerHTML=toolbar(UI.tab);drawList(UI.tab)}
+}
+$('#who').onchange=e=>{cfg.person=e.target.value;saveCfg();render()};
+
+/* ============ 清單 ============ */
+function toolbar(key){
+  const f=UI.f[key]=UI.f[key]||{};const s=SEC[key];
+  let h=`<div class="bar"><button class="btn" data-act="new" data-k="${key}">＋ 新增${s.label}</button>`;
+  if(key==='checkup')h+=`<button class="btn sec" data-act="cmp">${UI.cmp?'返回清單':'歷年比較'}</button>`;
+  h+='</div>';
+  if(key==='checkup'&&UI.cmp)return h+'<div id="list"></div>';
+  h+=`<div class="bar"><input type="search" id="q" placeholder="搜尋任何文字(藥名、醫院、症狀…)" value="${esc(f.q||'')}"><input type="date" id="df" value="${esc(f.from||'')}" title="起"><input type="date" id="dt" value="${esc(f.to||'')}" title="迄"></div>`;
+  if(s.hasPart)h+='<div class="filters" id="pf"></div>';
+  h+='<div id="list"></div>';
+  return h;
+}
+function baseRows(key){
+  const s=SEC[key];return (DB[s.sheet]||[]).filter(r=>!cfg.person||r['姓名']===cfg.person);
+}
+function drawList(key){
+  const s=SEC[key],f=UI.f[key]=UI.f[key]||{},dk=dkOf(s),L=$('#list');
+  if(key==='checkup'&&UI.cmp){drawCompare();return}
+  let a=baseRows(key);
+  if(f.q){const q=f.q.toLowerCase();a=a.filter(r=>Object.values(r).join(' ').toLowerCase().includes(q))}
+  if(f.from)a=a.filter(r=>(r[dk]||'')>=f.from);
+  if(f.to)a=a.filter(r=>(r[dk]||'')<=f.to);
+  if(s.hasPart){
+    const cnt={};a.forEach(r=>{const p=r['症狀部位大項']||'';cnt[p]=(cnt[p]||0)+1});
+    $('#pf').innerHTML=`<button class="chip ${!f.part?'on':''}" data-act="part" data-p="">全部 <small>${a.length}</small></button>`+Object.keys(PARTS).map(p=>`<button class="chip pc ${f.part===p?'on':''}" style="--c:${pcol(p)}" data-act="part" data-p="${esc(p)}">${picon(p,18)}${p}${cnt[p]?` <small>${cnt[p]}</small>`:''}</button>`).join('');
+    if(f.part)a=a.filter(r=>r['症狀部位大項']===f.part);
+  }
+  a.sort((x,y)=>((y[dk]||'')+(y['時間']||'')).localeCompare((x[dk]||'')+(x['時間']||'')));
+  if(!a.length){L.innerHTML='<div class="empty">還沒有資料<br>按上方「＋ 新增」開始記錄</div>';return}
+  let h='',last='';
+  for(const r of a){
+    if(r[dk]!==last){last=r[dk];h+=`<div class="dh">${esc(last)} ${wday(last)}</div>`}
+    h+=cardHTML(key,r);
+  }
+  L.innerHTML=h;
+}
+const partTag=r=>{const p=r['症狀部位大項'];if(!p)return '';const c=pcol(p);return `<span class="tag part" style="color:${c};background:color-mix(in srgb,${c} 15%,transparent)">${picon(p,16)}${esc(p)}${r['症狀部位細項']?' / '+esc(r['症狀部位細項']):''}</span>`};
+function cardHTML(key,r){
+  const s=SEC[key];let head='',body='';
+  const who=!cfg.person&&r['姓名']?`<span class="tag">${esc(r['姓名'])}</span>`:'';
+  if(key==='checkup'){
+    const filled=CKITEMS.filter(i=>r[i.k]!==undefined&&r[i.k]!=='');
+    const bad=(r['異常項目']||'').split('、').filter(Boolean);
+    head=`<b>${esc(r['健檢醫院']||'健康檢查')}</b>${who}${r['方案費用']!==''&&r['方案費用']!==undefined?`<span class="tag">$${esc(r['方案費用'])}</span>`:''}`;
+    const gc=CK.map(g=>{const n=g[2].filter(i=>r[i[0]]!==undefined&&r[i[0]]!=='').length;const c=ICOL[g[1]];return n?`<span class="tag part" style="color:${c};background:color-mix(in srgb,${c} 15%,transparent)">${ic(g[1],c,16)}${g[0]} ${n}</span>`:''}).join('');
+    body=`<div class="kvs"><span class="kv"><i>已填項目</i>${filled.length}</span>${bad.length?`<span class="kv bad"><i>標記異常</i>${esc(bad.join('、'))}</span>`:''}</div><div class="card-h" style="margin-top:6px">${gc}</div>${r['備註']?`<div class="note">${esc(r['備註'])}</div>`:''}`;
+  }else if(key==='symptoms'){
+    head=`<b></b>${who}${partTag(r)}`;
+    body=`<div class="card-h" style="margin-bottom:0">${symTags(r['症狀'])}</div>${r['其他說明']?`<div class="note">${esc(r['其他說明'])}</div>`:''}${r['備註']?`<div class="note">${esc(r['備註'])}</div>`:''}`;
+  }else{
+    const titles={vitals:r['時間'],meds:[r['藥品'],r['劑量']].filter(Boolean).join('  '),visits:r['醫院名稱'],diet:''};
+    head=`<b>${esc(titles[key]||'')}</b>${who}${partTag(r)}`;
+    const kv=[];
+    for(const f of s.fields){
+      if(f.g||f.t==='part'||f.t==='chips'||f.k==='備註'||f.k==='時間')continue;
+      if(key==='meds'&&(f.k==='藥品'||f.k==='劑量'))continue;
+      if(key==='visits'&&f.k==='醫院名稱')continue;
+      const v=r[f.k];if(v===undefined||v==='')continue;
+      kv.push(`<span class="kv"><i>${f.k}</i>${esc(v)}${f.u?' '+f.u:''}</span>`);
+    }
+    body=(kv.length?`<div class="kvs">${kv.join('')}</div>`:'')+(r['備註']?`<div class="note">${esc(r['備註'])}</div>`:'');
+  }
+  return `<div class="card"><div class="card-h">${head}</div>${body}<div class="acts"><button class="btn sec sm" data-act="edit" data-k="${key}" data-id="${r.id}">修改</button><button class="btn sec sm" data-act="copy" data-k="${key}" data-id="${r.id}">複製</button><button class="btn warn sm" data-act="del" data-k="${key}" data-id="${r.id}">刪除</button></div></div>`;
+}
+
+/* ============ 表單 ============ */
+function openModal(title,body,foot){$('#mt').textContent=title;$('#mbody').innerHTML=body;$('#mfoot').innerHTML=foot;$('#modal').hidden=false;$('#mbody').scrollTop=0}
+function closeModal(){$('#modal').hidden=true;$('#mbody').innerHTML=''}
+const personSel=v=>`<select name="姓名" required>${persons().map(n=>`<option ${n===v?'selected':''}>${esc(n)}</option>`).join('')}</select>`;
+function latestOf(sheet,person,k){
+  const a=(DB[sheet]||[]).filter(r=>r['姓名']===person&&r[k]!==undefined&&r[k]!=='').sort((x,y)=>((y['日期']||'')+(y['時間']||'')).localeCompare((x['日期']||'')+(x['時間']||'')));
+  return a[0]?a[0][k]:'';
+}
+function bmi(h,w){h=Number(h);w=Number(w);return h>0&&w>0?Math.round(w/Math.pow(h/100,2)*10)/10:''}
+
+function openForm(key,row,mode='new'){
+  if(key==='checkup')return openCheckup(row,mode);
+  const s=SEC[key],b=row||{},dk=dkOf(s),fresh=mode==='new';
+  if(!s.nameText&&!persons().length){toast('請先到「設定」新增人員');UI.tab='settings';closeModal();render();return}
+  const val=k=>fresh?'':(b[k]??'');
+  const person=s.nameText?val('姓名'):(fresh?(cfg.person||persons()[0]):(b['姓名']||persons()[0]));
+  let h='<form id="F" class="grid" autocomplete="off">';
+  if(dk)h+=`<div class="fld"><label>日期</label><input type="date" name="${dk}" value="${esc(mode==='edit'||mode==='again'?b[dk]:TODAY())}" required></div>`;
+  h+=`<div class="fld"><label>姓名</label>${s.nameText?`<input name="姓名" value="${esc(person)}" required>`:personSel(person)}</div>`;
+  for(const f of s.fields){
+    if(f.g){h+=`<div class="gh full">${f.g}</div>`;continue}
+    if(f.t==='part'){
+      h+=`<div class="fld full"><label>症狀部位:先選大項,再選細項</label><div class="chips" id="pp"></div><div class="chips" id="pd" style="margin-top:8px"></div><input type="hidden" name="症狀部位大項" value="${esc(val('症狀部位大項'))}"><input type="hidden" name="症狀部位細項" value="${esc(val('症狀部位細項'))}"></div>`;continue}
+    if(f.t==='chips'){
+      h+=`<div class="fld full"><label>症狀與程度(點選程度即勾選,再點一次取消)</label><div id="syms"></div></div>`;continue}
+    let v=val(f.k);
+    if(f.t==='time'&&mode!=='edit')v=NOW();
+    if(key==='vitals'&&fresh&&f.k==='身高')v=latestOf('身體數值',person,'身高');
+    const full=f.t==='area'||f.full?'full':'';
+    if(f.t==='area'){h+=`<div class="fld full"><label>${f.k}</label><textarea name="${f.k}" rows="2">${esc(v)}</textarea></div>`;continue}
+    if(f.t==='sel'){h+=`<div class="fld"><label>${f.k}</label><select name="${f.k}">${f.o.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select></div>`;continue}
+    const type=f.t==='time'?'time':f.t==='date'?'date':f.t==='text'?'text':'number';
+    h+=`<div class="fld ${full}"><label>${f.k}${f.u?` <small>${f.u}</small>`:''}${f.auto?' <small>自動計算</small>':''}</label><input type="${type}" name="${f.k}" value="${esc(v)}" ${type==='number'?`step="${f.step||'any'}" inputmode="decimal"`:''} ${f.auto?'readonly':''}>${f.water?'<div class="chips" style="margin-top:6px">'+[150,250,500,1000].map(n=>`<button type="button" class="chip" data-add="${n}">+${n}</button>`).join('')+'</div>':''}</div>`;
+  }
+  h+='</form>';
+  const foot=`<button class="btn sec" data-act="close">取消</button>${s.again&&mode!=='edit'?'<button class="btn sec" id="saveAgain">儲存並再新增一筆</button>':''}<button class="btn" id="saveBtn">儲存</button>`;
+  openModal((mode==='edit'?'修改':mode==='copy'?'複製':'新增')+s.label,h,foot);
+  const F=$('#F');
+  /* --- 部位選擇(大項 → 細項)與症狀程度 --- */
+  let sel={};
+  String(val('症狀')).split('、').filter(Boolean).forEach(e=>{const [n,o]=parseSym(e);sel[n]=o});
+  if(s.hasPart){
+    const H1=F.elements['症狀部位大項'],H2=F.elements['症狀部位細項'];
+    const drawSyms=()=>{
+      const box=$('#syms');if(!box)return;
+      const base=(PARTS[H1.value]&&PARTS[H1.value].sub[H2.value])||[];
+      const list=[...base,...Object.keys(sel).filter(k=>!base.includes(k))];
+      if(!list.length){box.innerHTML=`<div class="note">${H2.value?'這個細項沒有預設症狀,請在「其他說明」填寫':'請先選上面的部位大項與細項'}</div>`;return}
+      box.innerHTML=list.map(n=>{const opts=OPT[n]||SEV;return `<div class="sx"><div class="sn">${esc(n)}</div><div class="so">${opts.map((o,i)=>`<button type="button" class="opt ${sel[n]===o?'on':''}" style="--c:${optColor(i,opts.length)}" data-s="${esc(n)}" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>`}).join('');
+    };
+    const drawParts=()=>{
+      $('#pp').innerHTML=Object.keys(PARTS).map(p=>`<button type="button" class="chip pc ${H1.value===p?'on':''}" style="--c:${pcol(p)}" data-p1="${esc(p)}">${picon(p,18)}${p}</button>`).join('');
+      const subs=H1.value&&PARTS[H1.value]?Object.keys(PARTS[H1.value].sub):[];
+      $('#pd').innerHTML=subs.map(x=>`<button type="button" class="chip pc ${H2.value===x?'on':''}" style="--c:${pcol(H1.value)}" data-p2="${esc(x)}">${x}</button>`).join('');
+    };
+    drawParts();drawSyms();
+    F.addEventListener('click',e=>{
+      const a=e.target.closest('[data-p1]'),c=e.target.closest('[data-p2]'),o=e.target.closest('[data-s]');
+      if(a){if(H1.value!==a.dataset.p1){H1.value=a.dataset.p1;H2.value='';sel={};const subs=Object.keys(PARTS[H1.value].sub);if(subs.length===1)H2.value=subs[0]}drawParts();drawSyms()}
+      else if(c){if(H2.value!==c.dataset.p2){H2.value=c.dataset.p2;sel={}}drawParts();drawSyms()}
+      else if(o){const n=o.dataset.s,v=o.dataset.o;if(sel[n]===v)delete sel[n];else sel[n]=v;drawSyms()}
+    });
+  }
+  const calc=()=>{const e=F.elements['BMI'];if(e)e.value=bmi(F.elements['身高'].value,F.elements['體重'].value)};
+  if(F.elements['BMI']){F.elements['身高'].oninput=calc;F.elements['體重'].oninput=calc;if(fresh||mode==='copy')calc()}
+  F.addEventListener('click',e=>{const a=e.target.closest('[data-add]');if(a){const w=F.elements['飲水'];w.value=(Number(w.value)||0)+Number(a.dataset.add)}});
+  const save=again=>{
+    if(!F.reportValidity())return;
+    let o={id:mode==='edit'?b.id:uid()};
+    if(dk)o[dk]=F.elements[dk].value;
+    o['姓名']=F.elements['姓名'].value.trim();
+    for(const f of s.fields){
+      if(f.g)continue;
+      if(f.t==='part'){o['症狀部位大項']=F.elements['症狀部位大項'].value;o['症狀部位細項']=F.elements['症狀部位細項'].value;continue}
+      if(f.t==='chips'){o['症狀']=Object.entries(sel).map(([k,v])=>v?`${k}(${v})`:k).join('、');continue}
+      const v=F.elements[f.k].value;
+      o[f.k]=(!f.t||f.t==='num')&&f.t!=='text'&&v!==''?Number(v):v;
+    }
+    if(mode==='edit')o={...b,...o};
+    if(s.unique&&mode!=='edit'){
+      const ex=(DB[s.sheet]||[]).find(r=>r['姓名']===o['姓名']&&r[dk]===o[dk]);
+      if(ex){if(!confirm(`${o['姓名']} 在 ${o[dk]} 已有一筆${s.label},要覆蓋嗎?`))return;o.id=ex.id}
+    }
+    if(s.nameText&&mode==='edit'&&b['姓名']&&b['姓名']!==o['姓名']&&!confirm(`把過去所有紀錄的「${b['姓名']}」一起改成「${o['姓名']}」?`))return;
+    if(s.nameText&&mode==='edit'&&b['姓名']!==o['姓名']){renameAll(b['姓名'],o['姓名']);if(cfg.person===b['姓名']){cfg.person=o['姓名'];saveCfg()}}
+    putRow(s.sheet,o);closeModal();toast('已儲存');render();
+    if(again)openForm(key,o,'again');
+  };
+  $('#saveBtn').onclick=()=>save(false);
+  const sa=$('#saveAgain');if(sa)sa.onclick=()=>save(true);
+}
+function renameAll(from,to){
+  Object.values(SEC).forEach(s=>{if(s.nameText)return;(DB[s.sheet]||[]).forEach(r=>{if(r['姓名']===from){r['姓名']=to;enqueue({action:'upsert',sheet:s.sheet,row:r})}})});
+  SV('hr_db',DB);
+}
+
+/* ============ 健檢表單 ============ */
+function openCheckup(row,mode){
+  if(!persons().length){toast('請先到「設定」新增人員');UI.tab='settings';closeModal();render();return}
+  const b=row||{},fresh=mode==='new';
+  const flags=new Set(fresh?[]:String(b['異常項目']||'').split('、').filter(Boolean));
+  const v=k=>fresh?'':(b[k]??'');
+  let h=`<form id="F" autocomplete="off"><div class="grid">
+  <div class="fld"><label>健檢日期</label><input type="date" name="健檢日期" value="${esc(mode==='edit'?b['健檢日期']:TODAY())}" required></div>
+  <div class="fld"><label>姓名</label>${personSel(fresh?(cfg.person||persons()[0]):b['姓名'])}</div>
+  <div class="fld"><label>健檢醫院</label><input name="健檢醫院" value="${esc(v('健檢醫院'))}"></div>
+  <div class="fld"><label>方案費用 <small>元</small></label><input type="number" inputmode="decimal" name="方案費用" value="${esc(v('方案費用'))}"></div>
+  <div class="fld full"><label>備註</label><textarea name="備註" rows="2">${esc(v('備註'))}</textarea></div></div>
+  <div class="gh" style="margin:14px 0 8px">檢查項目(依大項分區,按「異常」可標記)</div>
+  <input type="search" id="iq" placeholder="搜尋項目,例如 肝、血糖、LDL" style="margin-bottom:10px">`;
+  CK.forEach((g,gi)=>{
+    const n=g[2].filter(i=>v(i[0])!=='').length;
+    h+=`<details class="grp" data-g="${gi}" ${n?'open':''}><summary>${ic(g[1],null,22)}<span style="color:${ICOL[g[1]]}">${g[0]}</span><span class="cnt">已填 <span class="gn">${n}</span>/${g[2].length}</span></summary><div class="items">`;
+    g[2].forEach(i=>{
+      const bad=flags.has(i[0]);
+      h+=`<div class="it ${bad?'bad':''}" data-k="${esc(i[0])}"><label>${esc(i[0])}${i[1]?` <small style="color:var(--pri)">${i[1]}</small>`:''}</label><div class="row"><input type="${i[2]==='t'?'text':'number'}" ${i[2]==='t'?'':'step="any" inputmode="decimal"'} name="${esc(i[0])}" value="${esc(v(i[0]))}" ${i[0]==='BMI'?'readonly':''}><button type="button" class="flag ${bad?'on':''}" title="標記異常">異常</button></div></div>`;
+    });
+    h+='</div></details>';
+  });
+  h+='</form>';
+  openModal((mode==='edit'?'修改':mode==='copy'?'複製':'新增')+'健康檢查',h,'<button class="btn sec" data-act="close">取消</button><button class="btn" id="saveBtn">儲存</button>');
+  const F=$('#F');
+  const recount=()=>F.querySelectorAll('details.grp').forEach(d=>{d.querySelector('.gn').textContent=[...d.querySelectorAll('input')].filter(x=>x.value!=='').length});
+  F.addEventListener('input',e=>{
+    if(e.target.id==='iq')return;
+    if(e.target.name==='身高'||e.target.name==='體重'){F.elements['BMI'].value=bmi(F.elements['身高'].value,F.elements['體重'].value)}
+    recount();
+  });
+  F.addEventListener('click',e=>{const f=e.target.closest('.flag');if(!f)return;const it=f.closest('.it'),k=it.dataset.k;flags.has(k)?flags.delete(k):flags.add(k);f.classList.toggle('on');it.classList.toggle('bad')});
+  $('#iq').oninput=e=>{
+    const q=e.target.value.trim().toLowerCase();
+    F.querySelectorAll('details.grp').forEach(d=>{
+      let any=false;
+      d.querySelectorAll('.it').forEach(it=>{const m=!q||it.dataset.k.toLowerCase().includes(q)||d.firstElementChild.textContent.toLowerCase().includes(q);it.classList.toggle('hide',!m);if(m)any=true});
+      d.style.display=any?'':'none';if(q&&any)d.open=true;
+    });
+  };
+  $('#saveBtn').onclick=()=>{
+    if(!F.reportValidity())return;
+    let o={id:mode==='edit'?b.id:uid(),'健檢日期':F.elements['健檢日期'].value,'姓名':F.elements['姓名'].value,'健檢醫院':F.elements['健檢醫院'].value.trim(),'方案費用':F.elements['方案費用'].value===''?'':Number(F.elements['方案費用'].value)};
+    CKITEMS.forEach(i=>{const x=F.elements[i.k].value;o[i.k]=i.t==='n'&&x!==''?Number(x):x});
+    o['異常項目']=[...flags].join('、');o['備註']=F.elements['備註'].value;
+    if(mode==='edit')o={...b,...o};
+    putRow('健檢紀錄',o);closeModal();toast('已儲存');render();
+  };
+}
+
+/* ============ 健檢歷年比較 ============ */
+function drawCompare(){
+  const L=$('#list'),f=UI.f.checkup=UI.f.checkup||{};
+  const who=cfg.person||persons()[0];
+  if(!who){L.innerHTML='<div class="empty">請先新增人員</div>';return}
+  const recs=(DB['健檢紀錄']||[]).filter(r=>r['姓名']===who).sort((a,b)=>(b['健檢日期']||'').localeCompare(a['健檢日期']||'')).slice(0,8);
+  let h=`<div class="bar"><b>${esc(who)}</b><select id="cg" style="flex:1"><option value="">全部大項</option>${CK.map((g,i)=>`<option value="${i}" ${String(f.cg)===String(i)?'selected':''}>${g[0]}</option>`).join('')}</select><input type="search" id="ci" placeholder="搜尋項目" value="${esc(f.ci||'')}" style="flex:1"></div>`;
+  if(!recs.length){L.innerHTML=h+'<div class="empty">'+esc(who)+' 還沒有健檢紀錄</div>';bindCmp();return}
+  h+='<div class="tbl"><table><tr><th>項目</th>'+recs.map(r=>`<th>${esc(r['健檢日期'])}<br><small style="font-weight:400">${esc(r['健檢醫院']||'')}</small></th>`).join('')+'</tr>';
+  CK.forEach((g,gi)=>{
+    if(f.cg!==undefined&&f.cg!==''&&String(f.cg)!==String(gi))return;
+    const rows=g[2].filter(i=>(!f.ci||i[0].toLowerCase().includes(f.ci.toLowerCase()))&&recs.some(r=>r[i[0]]!==undefined&&r[i[0]]!==''));
+    if(!rows.length)return;
+    h+=`<tr class="gr"><td colspan="${recs.length+1}" style="color:${ICOL[g[1]]}">${ic(g[1],null,18)} ${g[0]}</td></tr>`;
+    rows.forEach(i=>{
+      h+=`<tr><td>${esc(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</td>`+recs.map(r=>{const bad=String(r['異常項目']||'').split('、').includes(i[0]);const x=r[i[0]];return `<td class="${bad?'bad':''}">${x===undefined||x===''?'—':esc(x)}${bad?' (異常)':''}</td>`}).join('')+'</tr>';
+    });
+  });
+  h+='</table></div><div class="note">最多顯示最近 8 次;紅字代表你在該次標記為異常。</div>';
+  L.innerHTML=h;bindCmp();
+}
+function bindCmp(){
+  const f=UI.f.checkup;
+  $('#cg').onchange=e=>{f.cg=e.target.value;drawCompare()};
+  $('#ci').oninput=e=>{f.ci=e.target.value;const p=e.target.selectionStart;drawCompare();const n=$('#ci');n.focus();n.setSelectionRange(p,p)};
+}
+
+/* ============ 總覽 ============ */
+function homeHTML(){
+  const who=cfg.person;const t=TODAY();
+  const rows=sh=>(DB[sh]||[]).filter(r=>!who||r['姓名']===who);
+  const water=rows('飲食飲水').filter(r=>r['日期']===t).reduce((a,r)=>a+(Number(r['飲水'])||0),0);
+  const medsT=rows('用藥紀錄').filter(r=>r['日期']===t).length;
+  const symT=rows('身體狀況').filter(r=>r['日期']===t).length;
+  const byDT=(a,b)=>((b['日期']||'')+(b['時間']||'')).localeCompare((a['日期']||'')+(a['時間']||''));
+  const lv=rows('身體數值').sort(byDT)[0];
+  const ls=rows('身體狀況').sort(byDT).slice(0,5);
+  const lc=rows('健檢紀錄').sort((a,b)=>(b['健檢日期']||'').localeCompare(a['健檢日期']||''))[0];
+  let h=`<div class="dh" style="margin-top:0">${t} ${wday(t)} · ${who?esc(who):'全部成員'}</div>`;
+  h+='<div class="home-grid">'+['vitals','diet','meds','symptoms','visits','checkup'].map(k=>`<button class="qa" data-act="new" data-k="${k}">${ic(SEC[k].i)}${SEC[k].label}</button>`).join('')+'</div>';
+  h+=`<div class="stat"><div><b>${water}</b><small>今日飲水 ml</small></div><div><b>${medsT}</b><small>今日用藥</small></div><div><b>${symT}</b><small>今日症狀</small></div></div>`;
+  if(lv){const ks=['體重','BMI','收縮壓','舒張壓','脈搏'].filter(k=>lv[k]!==''&&lv[k]!==undefined);
+    h+=`<h3>最近一次數值 <small style="color:var(--mut);font-weight:400">${esc(lv['日期'])}${who?'':' · '+esc(lv['姓名'])}</small></h3><div class="card"><div class="kvs">${ks.map(k=>`<span class="kv"><i>${k}</i>${esc(lv[k])}</span>`).join('')||'—'}</div></div>`}
+  if(ls.length)h+=`<h3>最近症狀</h3>`+ls.map(r=>`<div class="card"><div class="card-h"><b>${esc(r['日期'])}</b>${!who?`<span class="tag">${esc(r['姓名'])}</span>`:''}${partTag(r)}</div><div class="card-h" style="margin-bottom:0">${symTags(r['症狀'])}${r['其他說明']?`<span class="note" style="margin:0">${esc(r['其他說明'])}</span>`:''}</div></div>`).join('');
+  if(lc)h+=`<h3>最近健檢</h3><div class="card"><div class="card-h"><b>${esc(lc['健檢日期'])}</b><span class="tag">${esc(lc['健檢醫院']||'')}</span></div>${lc['異常項目']?`<div class="kv bad">標記異常:${esc(lc['異常項目'])}</div>`:'<div class="note">無標記異常</div>'}</div>`;
+  if(!persons().length)h+='<div class="card">第一次使用?先到「設定」新增家人。</div>';
+  return h;
+}
+
+/* ============ 設定 ============ */
+function settingsHTML(){
+  let h=`<h3 style="margin-top:0">人員管理</h3>`+(persons().length?(DB['人員']||[]).map(r=>`<div class="pr"><b>${esc(r['姓名'])}</b><span class="tag">${esc(r['性別']||'')} ${esc(r['生日']||'')}</span><button class="btn sec sm" data-act="edit" data-k="people" data-id="${r.id}">修改</button><button class="btn warn sm" data-act="del" data-k="people" data-id="${r.id}">刪除</button></div>`).join(''):'<div class="empty" style="padding:14px">尚未新增人員</div>')+`<button class="btn" data-act="new" data-k="people">＋ 新增人員</button>`;
+  h+=`<h3>Google Sheet 連線</h3>`;
+  if(SCRIPT_URL)h+=`<div class="note" style="margin-bottom:10px">已連線。每次按「儲存」,資料會自動寫入 Google Sheet。</div><button class="btn sec" data-act="pull">立即同步</button>`;
+  else h+=`<div class="fld"><label>Apps Script 網頁應用程式網址</label><input id="cu" value="${esc(cfg.url)}" placeholder="https://script.google.com/macros/s/…/exec"></div><div class="bar" style="margin-top:10px"><button class="btn" data-act="saveurl">儲存並連線</button><button class="btn sec" data-act="pull">立即同步</button></div>`;
+  return h;
+}
+
+/* ============ 事件 ============ */
+document.addEventListener('click',async e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,k=el.dataset.k,id=el.dataset.id;
+  const find=()=>(DB[SEC[k].sheet]||[]).find(r=>r.id===id);
+  if(a==='tab'){UI.tab=el.dataset.t;render();window.scrollTo(0,0)}
+  else if(a==='new')openForm(k,null,'new');
+  else if(a==='edit')openForm(k,find(),'edit');
+  else if(a==='copy')openForm(k,find(),'copy');
+  else if(a==='del'){if(confirm(k==='people'?'刪除這位成員?(他的紀錄會保留)':'確定刪除這筆紀錄?')){delRow(SEC[k].sheet,id);toast('已刪除');render()}}
+  else if(a==='close')closeModal();
+  else if(a==='part'){UI.f[UI.tab].part=el.dataset.p;drawList(UI.tab)}
+  else if(a==='cmp'){UI.cmp=!UI.cmp;render()}
+  else if(a==='sync'){if(!cfg.url){UI.tab='settings';render()}else{lastErr='';await flush();if(!Q.length&&!lastErr)toast('已同步')}}
+  else if(a==='saveurl'){cfg.url=$('#cu').value.trim();saveCfg();if(!cfg.url){render();return}if(await pull(true)){toast('連線成功');render()}else{toast('連線失敗:'+(lastErr||'請檢查網址'))}}
+  else if(a==='pull')pull(false);
+});
+document.addEventListener('input',e=>{
+  const f=UI.f[UI.tab];if(!f)return;
+  if(e.target.id==='q'){f.q=e.target.value;drawList(UI.tab)}
+  else if(e.target.id==='df'){f.from=e.target.value;drawList(UI.tab)}
+  else if(e.target.id==='dt'){f.to=e.target.value;drawList(UI.tab)}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden)closeModal()});
+$('#modal').addEventListener('mousedown',e=>{if(e.target.id==='modal')closeModal()});
+window.addEventListener('online',()=>{lastErr='';flush()});
+setInterval(()=>{if(Q.length&&!flushing){lastErr='';flush()}},30000);
+
+render();
+if(cfg.url)pull(true);
+if(!persons().length&&!cfg.url){UI.tab='settings';render()}
+</script>
+</body>
+</html>
