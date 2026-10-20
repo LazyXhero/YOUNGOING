@@ -178,14 +178,8 @@ $('#logo').innerHTML=ic('leaf','#d4b483',24)+'養序';
 
 /* ============ 症狀選單(可自行增減:部位 → 細項 → 症狀;順序是從頭到腳,最後是全身、其他) ============ */
 const SEV=['輕微','中','嚴重'];                       /* 一般症狀的程度選項 */
-const OPT={'鼻水':['微','中','多','濃'],'發燒':['低燒','中度','高燒'],'排便':['正常','偏硬','偏軟']};  /* 特別的症狀選項 */
-/* 需要再往下選的症狀:每一層都是單選 */
-const DEEPSYM={
- '換牙':[['位置',['上面','下面']],['乳牙／恆牙',['乳牙','恆牙']],['牙齒',c=>c[1]==='乳牙'?T_BABY:c[1]==='恆牙'?T_PERM:[]],['左右',['右','左']]],
- '月經':[['狀態',['開始','持續','結束']],['經量',['少','中','多']]]
-};
-const LIMBDEEP=[['左右',['左','右','雙側']],['程度',SEV]];   /* 四肢的所有症狀都會先選左右 */
-const deepOf=(n,p1)=>DEEPSYM[n]||(p1==='四肢'?LIMBDEEP:null);
+const DEF_OPT={'鼻水':['微','中','多','濃'],'發燒':['低燒','中度','高燒'],'排便':['正常','偏硬','偏軟']};  /* 特別的症狀選項 */
+const TOOTH=[['位置',['上面','下面']],['乳牙／恆牙',['乳牙','恆牙']],['牙齒',c=>c[1]==='乳牙'?T_BABY:c[1]==='恆牙'?T_PERM:[]],['左右',['右','左']]];   /* 換牙的固定流程(含牙齒圖) */
 /* ============ 換牙資料 ============ */
 const T_PERM=['中門牙','側門牙','犬齒','第一小臼齒','第二小臼齒','第一大臼齒','第二大臼齒','智齒'];
 const T_BABY=['乳中門牙','乳側門牙','乳犬齒','第一乳臼齒','第二乳臼齒'];
@@ -200,7 +194,7 @@ function toothHint(c){
   if(st==='乳牙'&&AGE_BABY[t]){const a=AGE_BABY[t][pi];return `${pos}${t}:乳牙大約 ${a[0]} 長出,大約 ${a[1]} 脫落,之後長恆牙`}
   return '';
 }
-function toothPanel(c,mode){
+function toothPanel(c,mode,ro){
   const perm=mode==='恆牙',names=perm?T_PERM:T_BABY;
   const ws=perm?[13,11,12,13,13,18,18,17]:[18,15,18,24,27];
   const hs=perm?[17,17,19,20,20,23,23,22]:[22,22,24,28,30];
@@ -225,12 +219,13 @@ function toothPanel(c,mode){
     if(perm)return `<tr><td>${i+1} ${nm}</td><td>${AGE_PERM[nm][0]}</td><td>${AGE_PERM[nm][1]}</td></tr>`;
     const a=AGE_BABY[nm];return `<tr><td>${i+1} ${nm}</td><td>長出 ${a[0][0]}<br>脫落 ${a[0][1]}</td><td>長出 ${a[1][0]}<br>脫落 ${a[1][1]}</td></tr>`;
   }).join('');
+  if(ro)return `<div style="max-width:330px;margin:8px 0 2px"><svg viewBox="0 0 360 336" width="100%" role="img">${g.replace(/ data-tt="1"[^>]*style="cursor:pointer"/g,'')}</svg></div>`;
   return `<div class="card" style="margin:6px 0 10px"><div class="ch"><b>牙齒圖</b><span class="chips"><button type="button" class="chip sm ${perm?'on':''}" data-tm="恆牙">恆牙(第二次)</button><button type="button" class="chip sm ${perm?'':'on'}" data-tm="乳牙">乳牙(第一次)</button></span></div><div class="note" style="margin:0 0 6px">點圖上的牙齒就會自動選好;數字是從中間往兩邊數第幾顆</div><svg viewBox="0 0 360 336" width="100%" role="img">${g}</svg><div class="tbl" style="margin-top:8px"><table><tr><th>牙齒</th><th>上排${perm?'長出':''}</th><th>下排${perm?'長出':''}</th></tr>${rows}</table></div><div class="note">年齡只是大概,每個孩子不太一樣。乳牙(第一次長出)脫落後,恆牙(第二次)才會長出來。</div></div>`;
 }
 const EYE=['眨眼','飄眼','眼睛癢','紅腫','流淚','眼屎多','視力模糊','怕光'];
 const LIMB=['扭傷','麻','痠痛','腫脹','瘀青','無力','抽筋'];
 const SKIN=['紅疹','癢','乾燥','脫皮','濕疹','蚊蟲叮咬','傷口'];
-const PARTS={
+const DEF_PARTS={
 '腦／神經':{i:'brain',sub:{'頭部':['頭痛','偏頭痛','頭暈','撞到頭'],'神經':['眨眼','飄眼','抽肚','扭脖','聳肩','清喉嚨'],'睡眠':['失眠','易醒','夜驚','打鼾','疲累'],'情緒專注':['煩躁','焦慮','注意力不集中']}},
 '眼睛':{i:'eye',sub:{'右眼':EYE,'左眼':EYE,'雙眼':EYE}},
 '耳鼻喉':{i:'ent',sub:{'鼻腔':['鼻水','乾鼻涕','鼻血','鼻塞','打噴嚏','鼻子癢'],'喉嚨':['喉嚨痛','喉嚨癢','聲音沙啞','吞嚥痛','扁桃腺腫'],'耳朵':['耳朵痛','耳鳴','耳朵癢','耳朵流液'],'口腔':['換牙','口腔潰瘍','牙痛','牙齦腫痛','口臭']}},
@@ -246,13 +241,67 @@ const PARTS={
 '全身':{i:'body',sub:{'全身':['發燒','疲累','食慾差','畏寒','盜汗'],'精神':['精神差','煩躁','嗜睡'],'體溫':['發燒','體溫偏低'],'過敏':['過敏反應','蕁麻疹']}},
 '其他':{i:'other',sub:{'其他':[]}}
 };
+/* ============ 選項系統:選項放在 Google 試算表的「選項」分頁;讀不到時用下面的預設值 ============ */
+let PARTS={},SPECS={},BYNAME={};
+function defaultRows(){
+  const R=[];
+  for(const d in DEF_PARTS){
+    const sub=DEF_PARTS[d].sub;
+    for(const x in sub){
+      if(!sub[x].length)R.push({'大項':d,'細項':x,'症狀':'','選項':''});
+      sub[x].forEach(n=>{
+        let sp='';
+        if(n==='換牙'&&x==='口腔')sp='@換牙';
+        else if(d==='四肢')sp='左右:左,右,雙側|程度:輕微,中,嚴重';
+        else if(n==='月經')sp='狀態:開始,持續,結束|經量:少,中,多';
+        else if(DEF_OPT[n])sp=DEF_OPT[n].join(',');
+        R.push({'大項':d,'細項':x,'症狀':n,'選項':sp});
+      });
+    }
+  }
+  return R;
+}
+function parseSpec(sp){
+  sp=String(sp||'').trim();
+  if(!sp)return {t:'simple',o:SEV};
+  if(sp==='@換牙')return {t:'tooth'};
+  const split=x=>x.split(/[,，、]/).map(y=>y.trim()).filter(Boolean);
+  if(/[:：]/.test(sp)){
+    const lv=sp.split(/[|｜]/).map(seg=>{const i=seg.search(/[:：]/);return i<0?['選項',split(seg)]:[seg.slice(0,i).trim()||'選項',split(seg.slice(i+1))]}).filter(l=>l[1].length);
+    return lv.length?{t:'deep',lv}:{t:'simple',o:SEV};
+  }
+  const o=split(sp);return {t:'simple',o:o.length?o:SEV};
+}
+function buildOptions(rows){
+  const P={},SP={},BY={};let da='',xi='';
+  rows.forEach(r=>{
+    let d=String(r['大項']||'').trim(),x=String(r['細項']||'').trim(),n=String(r['症狀']||'').trim(),sp=String(r['選項']||'').trim();
+    if(!d&&!x&&!n&&!sp)return;
+    if(d){da=d;xi=x}else{d=da;if(x)xi=x;else x=xi}
+    if(!d)return;
+    if(!P[d])P[d]={i:DEF_PARTS[d]?DEF_PARTS[d].i:'other',sub:{}};
+    if(x&&!P[d].sub[x])P[d].sub[x]=[];
+    if(x&&n){
+      if(!P[d].sub[x].includes(n))P[d].sub[x].push(n);
+      const sc=parseSpec(sp);SP[d+'|'+x+'|'+n]=sc;
+      if(sc.t==='simple'&&!BY[n])BY[n]=sc.o;
+    }
+  });
+  return {P,SP,BY};
+}
+function applyOptions(){
+  let o=buildOptions((DB['選項']&&DB['選項'].length)?DB['選項']:defaultRows());
+  if(!Object.keys(o.P).length)o=buildOptions(defaultRows());
+  PARTS=o.P;SPECS=o.SP;BYNAME=o.BY;
+}
+const specOf=(p1,p2,n)=>SPECS[p1+'|'+p2+'|'+n]||{t:'simple',o:BYNAME[n]||SEV};
 const pcol=p=>ICOL[(PARTS[p]||{}).i]||'#9aa0a6';
 const picon=(p,sz)=>PARTS[p]?ic(PARTS[p].i,null,sz):'';
-const OC={2:['#7bd88f','#ff7a7a'],3:['#7bd88f','#ffd166','#ff7a7a'],4:['#7bd88f','#ffd166','#ff9a5c','#ff7a7a']};
-const optColor=(i,n)=>(OC[n]||OC[3])[Math.min(i,(OC[n]||OC[3]).length-1)];
+const OC={2:['#7bd88f','#ff7a7a'],3:['#7bd88f','#ffd166','#ff7a7a'],4:['#7bd88f','#ffd166','#ff9a5c','#ff7a7a'],5:['#7bd88f','#bfe36a','#ffd166','#ff9a5c','#ff7a7a']};
+const optColor=(i,n)=>{if(n<2)return '#d4b483';const a=OC[Math.min(n,5)];return a[n<=5?i:Math.round(i*(a.length-1)/(n-1))]};
 function parseSym(e){const m=String(e).match(/^(.+?)\((.+)\)$/);return m?[m[1],m[2]]:[String(e),''];}
 function symTag(e){
-  const [n,o]=parseSym(e);const opts=OPT[n]||SEV;const i=opts.indexOf(o);
+  const [n,o]=parseSym(e);const opts=BYNAME[n]||SEV;const i=opts.indexOf(o);
   const c=o&&i>=0?optColor(i,opts.length):'#d4b483';
   return `<span class="tag sv" style="color:${c}">${esc(n)}${o?' · '+esc(o.replace(/^\//,'')):''}</span>`;
 }
@@ -316,6 +365,7 @@ let DB=LS('hr_db',{});let Q=LS('hr_q',[]);
 let UI={tab:'home',f:{},cmp:false};
 let lastErr='',flushing=false;
 Object.values(SEC).forEach(s=>{DB[s.sheet]=DB[s.sheet]||[]});
+applyOptions();
 const persons=()=>(DB['人員']||[]).map(r=>r['姓名']).filter(Boolean);
 const saveCfg=()=>SV('hr_cfg',cfg);
 function putRow(sheet,o){const a=DB[sheet]=DB[sheet]||[];const i=a.findIndex(r=>r.id===o.id);if(i>=0)a[i]=o;else a.push(o);SV('hr_db',DB);enqueue({action:'upsert',sheet,row:o})}
@@ -338,15 +388,18 @@ async function flush(){
   flushing=false;badge();
   if(!lastErr&&Q.length)flush();
 }
-async function pull(silent){
+async function pull(silent,light){
   if(!cfg.url){if(!silent)toast('尚未設定 Google Sheet 網址');return false}
   await flush();
   if(Q.length){toast('還有資料待同步,請稍後再試');return false}
   try{
-    const i=await api('POST',{action:'init',headers:HEADERS()});if(!i.ok)throw new Error(i.error);
+    if(!light){const i=await api('POST',{action:'init',headers:HEADERS()});if(!i.ok)throw new Error(i.error)}
     const r=await api('GET',{action:'all'});if(!r.ok)throw new Error(r.error);
-    DB=r.data;Object.values(SEC).forEach(s=>{DB[s.sheet]=DB[s.sheet]||[]});SV('hr_db',DB);
-    if(!silent)toast('已從 Sheet 載入');render();return true;
+    DB=r.data;Object.values(SEC).forEach(s=>{DB[s.sheet]=DB[s.sheet]||[]});
+    if(!(DB['選項']||[]).length){try{const rows=defaultRows();const z=await api('POST',{action:'initOptions',rows:rows.map(x=>[x['大項'],x['細項'],x['症狀'],x['選項']])});if(z&&z.ok)DB['選項']=rows}catch(e){}}
+    SV('hr_db',DB);applyOptions();
+    if(!silent)toast('已從 Sheet 載入');
+    const ae=document.activeElement;if(!light||($('#modal').hidden&&!(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))))render();return true;
   }catch(e){lastErr=e.message;badge();if(!silent)toast('讀取失敗:'+e.message);return false}
 }
 function badge(){
@@ -423,7 +476,8 @@ function cardHTML(key,r){
     body=`<div class="kvs"><span class="kv"><i>已填項目</i>${filled.length}</span>${bad.length?`<span class="kv bad"><i>標記異常</i>${esc(bad.join('、'))}</span>`:''}</div><div class="card-h" style="margin-top:6px">${gc}</div>${r['備註']?`<div class="note">${esc(r['備註'])}</div>`:''}`;
   }else if(key==='symptoms'){
     head=`<b></b>${who}${partTag(r)}`;
-    body=`<div class="card-h" style="margin-bottom:0">${symTags(r['症狀'])}</div>${r['其他說明']?`<div class="note">${esc(r['其他說明'])}</div>`:''}${r['備註']?`<div class="note">${esc(r['備註'])}</div>`:''}`;
+    const teeth=String(r['症狀']||'').split('、').map(parseSym).filter(x=>{const c=x[1].split('/');return c.length===4&&(c[1]==='乳牙'||c[1]==='恆牙')}).map(x=>{const c=x[1].split('/');return `<div class="note" style="margin:6px 0 0">${toothHint(c)}</div>${toothPanel(c,c[1],true)}`}).join('');
+    body=`<div class="card-h" style="margin-bottom:0">${symTags(r['症狀'])}</div>${teeth}${r['其他說明']?`<div class="note">${esc(r['其他說明'])}</div>`:''}${r['備註']?`<div class="note">${esc(r['備註'])}</div>`:''}`;
   }else{
     const titles={vitals:r['時間'],meds:[r['藥品'],r['劑量']].filter(Boolean).join('  '),visits:r['醫院名稱'],diet:''};
     head=`<b>${esc(titles[key]||'')}</b>${who}${partTag(r)}`;
@@ -587,22 +641,23 @@ function openForm(key,row,mode='new'){
   String(val('症狀')).split('、').filter(Boolean).forEach(e=>{const [n,o]=parseSym(e);sel[n]=o});
   if(s.hasPart){
     const H1=F.elements['症狀部位大項'],H2=F.elements['症狀部位細項'];
-    let toothOpen=false,toothMode='恆牙';
+    let toothOpen=false,toothMode='恆牙',toothN='換牙';
     const drawSyms=()=>{
       const box=$('#syms');if(!box)return;
       const base=(PARTS[H1.value]&&PARTS[H1.value].sub[H2.value])||[];
       const list=[...base,...Object.keys(sel).filter(k=>!base.includes(k))];
       if(!list.length){box.innerHTML=`<div class="note">${H2.value?'這個細項沒有預設症狀,請在「其他說明」填寫':'請先選上面的部位大項與細項'}</div>`;return}
       box.innerHTML=list.map(n=>{
-        const D=deepOf(n,H1.value);
+        const sp=specOf(H1.value,H2.value,n);
+        const D=sp.t==='deep'?sp.lv:sp.t==='tooth'?TOOTH:null;
         if(D){
           const cur=(sel[n]||'').split('/');
-          const lv=D.map((l,li)=>{const opts=typeof l[1]==='function'?l[1](cur):l[1];return `<div class="so" style="margin:3px 0"><span class="lbl">${l[0]}</span>${opts.length?opts.map(o=>`<button type="button" class="opt ${cur[li]===o?'on':''}" data-s="${esc(n)}" data-lv="${li}" data-o="${esc(o)}">${esc(o)}</button>`).join(''):'<span class="note" style="margin:0">請先選上一層</span>'}</div>`}).join('');
+          const lv=D.map((l,li)=>{const opts=typeof l[1]==='function'?l[1](cur):l[1];return `<div class="so" style="margin:3px 0"><span class="lbl">${esc(l[0])}</span>${opts.length?opts.map(o=>`<button type="button" class="opt ${cur[li]===o?'on':''}" data-s="${esc(n)}" data-lv="${li}" data-o="${esc(o)}">${esc(o)}</button>`).join(''):'<span class="note" style="margin:0">請先選上一層</span>'}</div>`}).join('');
           let extra='';
-          if(n==='換牙'){const h=toothHint(cur);extra=(h?`<div class="note" style="margin:4px 0">${h}</div>`:'')+`<button type="button" class="btn sec sm" data-tb="1" style="margin-top:4px">${toothOpen?'收起牙齒圖':'牙齒圖與換牙時間表'}</button>`}
-          return `<div class="sx"><div class="sn">${esc(n)}</div><div style="flex:1;min-width:0">${lv}${extra}</div></div>${n==='換牙'&&toothOpen?toothPanel(cur,toothMode):''}`;
+          if(sp.t==='tooth'){toothN=n;const h=toothHint(cur);extra=(h?`<div class="note" style="margin:4px 0">${h}</div>`:'')+`<button type="button" class="btn sec sm" data-tb="1" style="margin-top:4px">${toothOpen?'收起牙齒圖':'牙齒圖與換牙時間表'}</button>`}
+          return `<div class="sx"><div class="sn">${esc(n)}</div><div style="flex:1;min-width:0">${lv}${extra}</div></div>${sp.t==='tooth'&&toothOpen?toothPanel(cur,toothMode):''}`;
         }
-        const opts=OPT[n]||SEV;
+        const opts=sp.o;
         return `<div class="sx"><div class="sn">${esc(n)}</div><div class="so">${opts.map((o,i)=>`<button type="button" class="opt ${sel[n]===o?'on':''}" style="--c:${optColor(i,opts.length)}" data-s="${esc(n)}" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>`;
       }).join('');
     };
@@ -617,12 +672,12 @@ function openForm(key,row,mode='new'){
       if(a){if(H1.value!==a.dataset.p1){H1.value=a.dataset.p1;H2.value='';sel={};const subs=Object.keys(PARTS[H1.value].sub);if(subs.length===1)H2.value=subs[0]}drawParts();drawSyms()}
       else if(c){if(H2.value!==c.dataset.p2){H2.value=c.dataset.p2;sel={}}drawParts();drawSyms()}
       else if(o){const n=o.dataset.s,v=o.dataset.o;
-        if(o.dataset.lv!==undefined){const D=deepOf(n,H1.value),cur=(sel[n]||'').split('/');while(cur.length<D.length)cur.push('');const li=+o.dataset.lv;cur[li]=cur[li]===v?'':v;for(let q=li+1;q<D.length;q++)if(typeof D[q][1]==='function')cur[q]='';const j=cur.join('/');if(/^\/*$/.test(j))delete sel[n];else sel[n]=j.replace(/\/+$/,'')}
+        if(o.dataset.lv!==undefined){const sp=specOf(H1.value,H2.value,n),D=sp.t==='deep'?sp.lv:TOOTH,cur=(sel[n]||'').split('/');while(cur.length<D.length)cur.push('');const li=+o.dataset.lv;cur[li]=cur[li]===v?'':v;for(let q=li+1;q<D.length;q++)if(typeof D[q][1]==='function')cur[q]='';const j=cur.join('/');if(/^\/*$/.test(j))delete sel[n];else sel[n]=j.replace(/\/+$/,'')}
         else if(sel[n]===v)delete sel[n];else sel[n]=v;
         drawSyms()}
       else if(tb){toothOpen=!toothOpen;drawSyms()}
       else if(tm){toothMode=tm.dataset.tm;drawSyms()}
-      else if(tt){const d=tt.dataset;sel['換牙']=[d.pos,d.st,d.name,d.side].join('/');drawSyms()}
+      else if(tt){const d=tt.dataset;sel[toothN]=[d.pos,d.st,d.name,d.side].join('/');drawSyms()}
     });
   }
   const calc=()=>{const e=F.elements['BMI'];if(e)e.value=bmi(F.elements['身高'].value,F.elements['體重'].value)};
@@ -761,6 +816,7 @@ function homeHTML(){
 /* ============ 設定 ============ */
 function settingsHTML(){
   let h=`<h3 style="margin-top:0">人員管理</h3>`+(persons().length?(DB['人員']||[]).map(r=>`<div class="pr"><b>${esc(r['姓名'])}</b><span class="tag">${esc(r['性別']||'')} ${esc(r['生日']||'')}</span><button class="btn sec sm" data-act="edit" data-k="people" data-id="${r.id}">修改</button><button class="btn warn sm" data-act="del" data-k="people" data-id="${r.id}">刪除</button></div>`).join(''):'<div class="empty" style="padding:14px">尚未新增人員</div>')+`<button class="btn" data-act="new" data-k="people">＋ 新增人員</button>`;
+  h+=`<h3>部位與症狀選項</h3><div class="note" style="margin:0">部位、細項、症狀、程度的選項放在 Google 試算表的「選項」分頁。要增減就直接在試算表改,改完回到 APP 會自動更新(或按「立即同步」/重新整理),不用換 index.html。</div>`;
   h+=`<h3>Google Sheet 連線</h3>`;
   if(SCRIPT_URL)h+=`<div class="note" style="margin-bottom:10px">已連線。每次按「儲存」,資料會自動寫入 Google Sheet。</div><button class="btn sec" data-act="pull">立即同步</button>`;
   else h+=`<div class="fld"><label>Apps Script 網頁應用程式網址</label><input id="cu" value="${esc(cfg.url)}" placeholder="https://script.google.com/macros/s/…/exec"></div><div class="bar" style="margin-top:10px"><button class="btn" data-act="saveurl">儲存並連線</button><button class="btn sec" data-act="pull">立即同步</button></div>`;
@@ -799,6 +855,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#modal').hidden
 $('#modal').addEventListener('mousedown',e=>{if(e.target.id==='modal')closeModal()});
 window.addEventListener('online',()=>{lastErr='';flush()});
 setInterval(()=>{if(Q.length&&!flushing){lastErr='';flush()}},30000);
+/* 自動從 Sheet 更新:回到這個分頁時、以及每 60 秒(試算表手動輸入的資料會自動出現) */
+let lastPull=0;
+const autoPull=()=>{if(!cfg.url||flushing||Q.length||document.hidden||!$('#modal').hidden||Date.now()-lastPull<15000)return;lastPull=Date.now();pull(true,true)};
+document.addEventListener('visibilitychange',autoPull);window.addEventListener('focus',autoPull);
+setInterval(autoPull,60000);
 
 render();
 if(cfg.url)pull(true);
