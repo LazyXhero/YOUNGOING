@@ -57,6 +57,9 @@ input[readonly]{background:#101012;color:var(--mut)}
 .empty{text-align:center;color:var(--mut);padding:44px 10px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .grid>*{min-width:0}
+.eyes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.eyef{display:flex;align-items:center;gap:8px}.eyef b{color:var(--pri);flex:none}
+.tag.eye{font-weight:700}
 input[type=date],input[type=time]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;display:block;min-height:42px;text-align:left}
 input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
 @media(max-width:420px){.grid{grid-template-columns:minmax(0,1fr)}.items{grid-template-columns:minmax(0,1fr)}}
@@ -468,7 +471,11 @@ function drawList(key){
   }
   L.innerHTML=h;
 }
-const partTag=r=>{const p=r['症狀部位大項'];if(!p)return '';const c=pcol(p);return `<span class="tag part" style="color:${c};background:color-mix(in srgb,${c} 15%,transparent)">${picon(p,16)}${esc(p)}${r['症狀部位細項']?' / '+esc(r['症狀部位細項']):''}</span>`};
+const partTag=r=>{const p=r['症狀部位大項'];if(!p)return '';const c=pcol(p);const [sb,ex]=splitSub(p,r['症狀部位細項']);const bg=`color:${c};background:color-mix(in srgb,${c} 15%,transparent)`;
+  let more='';
+  if(ex){const e=p==='眼睛'?eyeParse(ex):null;
+    more=e?[['右',e[0]],['左',e[1]]].filter(x=>x[1]!=='').map(x=>`<span class="tag part eye" style="${bg}">${x[0]} ${esc(x[1])}</span>`).join(''):`<span class="tag part eye" style="${bg}">${esc(ex)}</span>`}
+  return `<span class="tag part" style="${bg}">${picon(p,16)}${esc(p)}${sb?' / '+esc(sb):''}</span>${more}`};
 function cardHTML(key,r){
   const s=SEC[key];let head='',body='';
   const who=!cfg.person&&r['姓名']?`<span class="tag">${esc(r['姓名'])}</span>`:'';
@@ -621,6 +628,7 @@ function splitSub(big,sub){
   if(hit)return [hit,sub.slice(hit.length).trim()];
   return [sub,''];
 }
+const eyeParse=t=>{const m=String(t||'').trim().match(/^(?:右\s*([^\s左]*))?\s*(?:左\s*(\S*))?$/);return m&&(m[1]!==undefined||m[2]!==undefined)?[m[1]||'',m[2]||'']:null};
 function openForm(key,row,mode='new'){
   if(key==='checkup')return openCheckup(row,mode);
   const s=SEC[key],b=row||{},dk=dkOf(s),fresh=mode==='new';
@@ -633,7 +641,7 @@ function openForm(key,row,mode='new'){
   for(const f of s.fields){
     if(f.g){h+=`<div class="gh full">${f.g}</div>`;continue}
     if(f.t==='part'){
-      h+=`<div class="fld full"><label>症狀部位:先選大項,再選細項</label><div class="chips" id="pp"></div><div class="chips" id="pd" style="margin-top:8px"></div><input type="hidden" name="症狀部位大項" value="${esc(val('症狀部位大項'))}"><input type="hidden" name="症狀部位細項" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[0])}"><div id="pxw" style="margin-top:8px"><label style="display:block;color:var(--mut);margin-bottom:4px">細項補充 <small style="color:var(--pri)">選填</small></label><input type="text" id="px" placeholder="" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])}"></div></div>`;continue}
+      h+=`<div class="fld full"><label>症狀部位:先選大項,再選細項</label><div class="chips" id="pp"></div><div class="chips" id="pd" style="margin-top:8px"></div><input type="hidden" name="症狀部位大項" value="${esc(val('症狀部位大項'))}"><input type="hidden" name="症狀部位細項" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[0])}"><div id="pxw" style="margin-top:8px"><div id="pxe" hidden><label style="display:block;color:var(--mut);margin-bottom:4px">眼睛度數 <small style="color:var(--pri)">選填,例如 右 0、左 50</small></label><div class="eyes"><div class="eyef"><b>右</b><input type="text" id="pxr" placeholder="0" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[0])}"></div><div class="eyef"><b>左</b><input type="text" id="pxl" placeholder="50" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[1])}"></div></div></div><div id="pxo"><label style="display:block;color:var(--mut);margin-bottom:4px">細項補充 <small style="color:var(--pri)">選填</small></label><input type="text" id="px" placeholder="補充說明,例如 左邊、位置" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])}"></div></div></div>`;continue}
     if(f.t==='chips'){
       h+=`<div class="fld full"><label>症狀與程度(點選程度即勾選,再點一次取消)</label><div id="syms"></div></div>`;continue}
     let v=val(f.k);
@@ -680,7 +688,8 @@ function openForm(key,row,mode='new'){
       $('#pd').innerHTML=subs.map(x=>`<button type="button" class="chip pc ${H2.value===x?'on':''}" style="--c:${pcol(H1.value)}" data-p2="${esc(x)}">${x}</button>`).join('');
     };
     const PX=$('#px');
-    const pxHint=()=>{PX.placeholder=H1.value==='眼睛'?'度數,例如 50/0':'補充說明,例如 左邊、度數、位置'};
+    const eyeMode=()=>H1.value==='眼睛'&&(!PX.value.trim()||eyeParse(PX.value));
+    const pxHint=()=>{const eye=eyeMode();$('#pxe').hidden=!eye;$('#pxo').hidden=eye;if(eye&&PX.value.trim()&&!$('#pxr').value&&!$('#pxl').value){const e=eyeParse(PX.value);$('#pxr').value=e[0];$('#pxl').value=e[1]}if(eye)PX.value=''};
     drawParts();drawSyms();pxHint();
     F.addEventListener('click',e=>{
       const a=e.target.closest('[data-p1]'),c=e.target.closest('[data-p2]'),o=e.target.closest('[data-s]'),tt=e.target.closest('[data-tt]'),tb=e.target.closest('[data-tb]'),tm=e.target.closest('[data-tm]');
@@ -705,7 +714,7 @@ function openForm(key,row,mode='new'){
     o['姓名']=F.elements['姓名'].value.trim();
     for(const f of s.fields){
       if(f.g)continue;
-      if(f.t==='part'){o['症狀部位大項']=F.elements['症狀部位大項'].value;o['症狀部位細項']=(F.elements['症狀部位細項'].value+(($('#px').value||'').trim()?' '+$('#px').value.trim():'')).trim();continue}
+      if(f.t==='part'){o['症狀部位大項']=F.elements['症狀部位大項'].value;const ex=$('#pxe').hidden?($('#px').value||'').trim():[($('#pxr').value.trim()?'右'+$('#pxr').value.trim():''),($('#pxl').value.trim()?'左'+$('#pxl').value.trim():'')].filter(Boolean).join(' ');o['症狀部位細項']=(F.elements['症狀部位細項'].value+(ex?' '+ex:'')).trim();continue}
       if(f.t==='chips'){o['症狀']=Object.entries(sel).map(([k,v])=>v?`${k}(${v})`:k).join('、');continue}
       const v=F.elements[f.k].value;
       o[f.k]=(!f.t||f.t==='num')&&f.t!=='text'&&v!==''?Number(v):v;
