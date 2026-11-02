@@ -50,6 +50,12 @@ input[readonly]{background:#101012;color:var(--mut)}
 .tag.part{font-weight:700}
 .tag.sv{background:transparent;border:1px solid;font-weight:700}
 .kvs{display:flex;flex-wrap:wrap;gap:6px 16px}
+.blks{margin-top:6px}
+.blk{display:grid;grid-template-columns:5.6em minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.blk:first-child{border-top:0}
+.blk>i{font-style:normal;color:var(--pri);font-weight:700}
+.bt{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
+.kvs+.blks{margin-top:8px}
 .kv i{font-style:normal;color:var(--mut);margin-right:5px}
 .kv.bad{color:var(--warn);font-weight:600}
 .note{color:var(--mut);margin-top:4px;white-space:pre-wrap}
@@ -325,11 +331,11 @@ vitals:{sheet:'身體數值',label:'身體數值',i:'vitals',fields:[
  {g:'生命徵象'},{k:'收縮壓',u:'mmHg'},{k:'舒張壓',u:'mmHg'},{k:'脈搏',u:'bpm'},{k:'體溫',u:'°C',step:'0.1'},
  {k:'備註',t:'area'}]},
 diet:{sheet:'飲食飲水',label:'飲食作息',i:'diet',unique:1,fields:[
- {g:'三餐'},{k:'早餐',t:'text',full:1},{k:'中餐',t:'text',full:1},{k:'晚餐',t:'text',full:1},
- {g:'其他飲食'},{k:'飲料',t:'text',full:1},{k:'加工食品',t:'text',full:1},{k:'炸物',t:'text',full:1},{k:'宵夜',t:'text',full:1},{k:'蔬果份數',u:'份',step:'0.5'},
+ {g:'三餐'},{k:'早餐',t:'area'},{k:'中餐',t:'area'},{k:'晚餐',t:'area'},
+ {g:'其他飲食'},{k:'飲料',t:'area'},{k:'加工食品',t:'area'},{k:'炸物',t:'area'},{k:'宵夜',t:'area'},{k:'蔬果份數',u:'份',step:'0.5'},
  {g:'飲水'},{k:'飲水',u:'ml',water:1},
  {g:'睡眠'},{k:'睡覺時間',t:'time'},{k:'起床時間',t:'time'},{k:'睡眠時數',u:'小時',auto:1},{k:'睡眠品質',t:'sel',o:['','很好','普通','差']},
- {g:'運動與螢幕'},{k:'運動項目',t:'text',full:1},{k:'運動分鐘',u:'分鐘'},{k:'步數',u:'步'},{k:'螢幕時間',u:'小時',step:'0.5'},
+ {g:'運動與螢幕'},{k:'運動項目',t:'area'},{k:'運動分鐘',u:'分鐘'},{k:'步數',u:'步'},{k:'螢幕時間',u:'小時',step:'0.5'},
  {k:'備註',t:'area'}]},
 meds:{sheet:'用藥紀錄',label:'用藥紀錄',i:'meds',hasPart:1,again:1,fields:[
  {k:'時間',t:'time'},{k:'部位',t:'part'},{k:'藥品',t:'text',full:1},{k:'劑量',t:'text'},{k:'備註',t:'area'}]},
@@ -496,15 +502,16 @@ function cardHTML(key,r){
   }else{
     const titles={vitals:r['時間'],meds:[r['藥品'],r['劑量']].filter(Boolean).join('  '),visits:r['醫院名稱'],diet:''};
     head=`<b>${esc(titles[key]||'')}</b>${who}${partTag(r)}`;
-    const kv=[];
+    const kv=[],blk=[];
     for(const f of s.fields){
       if(f.g||f.t==='part'||f.t==='chips'||f.k==='備註'||f.k==='時間')continue;
       if(key==='meds'&&(f.k==='藥品'||f.k==='劑量'))continue;
       if(key==='visits'&&f.k==='醫院名稱')continue;
       const v=r[f.k];if(v===undefined||v==='')continue;
-      kv.push(`<span class="kv"><i>${f.k}</i>${esc(v)}${f.u?' '+f.u:''}</span>`);
+      if(f.t==='text'||f.t==='area')blk.push(`<div class="blk"><i>${f.k}</i><div class="bt">${esc(v)}</div></div>`);
+      else kv.push(`<span class="kv"><i>${f.k}</i>${esc(v)}${f.u?' '+f.u:''}</span>`);
     }
-    body=(kv.length?`<div class="kvs">${kv.join('')}</div>`:'')+(r['備註']?`<div class="note">${esc(r['備註'])}</div>`:'');
+    body=(kv.length?`<div class="kvs">${kv.join('')}</div>`:'')+(blk.length?`<div class="blks">${blk.join('')}</div>`:'')+(r['備註']?`<div class="note">${esc(r['備註'])}</div>`:'');
   }
   return `<div class="card"><div class="card-h">${head}</div>${body}<div class="acts"><button class="btn sec sm" data-act="edit" data-k="${key}" data-id="${r.id}">修改</button><button class="btn sec sm" data-act="copy" data-k="${key}" data-id="${r.id}">複製</button><button class="btn warn sm" data-act="del" data-k="${key}" data-id="${r.id}">刪除</button></div></div>`;
 }
@@ -990,14 +997,18 @@ function homeHTML(){
   const symT=rows('身體狀況').filter(r=>r['日期']===t).length;
   const byDT=(a,b)=>((b['日期']||'')+(b['時間']||'')).localeCompare((a['日期']||'')+(a['時間']||''));
   const lv=rows('身體數值').sort(byDT)[0];
-  const ls=rows('身體狀況').sort(byDT).slice(0,5);
+  const ls=rows('身體狀況').reverse().sort(byDT);
   const lc=rows('健檢紀錄').sort((a,b)=>(b['健檢日期']||'').localeCompare(a['健檢日期']||''))[0];
   let h=`<div class="dh" style="margin-top:0">${t} ${wday(t)} · ${who?esc(who):'全部成員'}</div>`;
   h+='<div class="home-grid">'+['vitals','diet','meds','symptoms','visits','checkup'].map(k=>`<button class="qa" data-act="new" data-k="${k}">${ic(SEC[k].i)}${SEC[k].label}</button>`).join('')+'</div>';
   h+=`<div class="stat"><div><b>${water}</b><small>今日飲水 ml</small></div><div><b>${medsT}</b><small>今日用藥</small></div><div><b>${symT}</b><small>今日症狀</small></div></div>`;
   if(lv){const ks=['體重','BMI','收縮壓','舒張壓','脈搏'].filter(k=>lv[k]!==''&&lv[k]!==undefined);
     h+=`<h3>最近一次數值 <small style="color:var(--mut);font-weight:400">${esc(lv['日期'])}${who?'':' · '+esc(lv['姓名'])}</small></h3><div class="card"><div class="kvs">${ks.map(k=>`<span class="kv"><i>${k}</i>${esc(lv[k])}</span>`).join('')||'—'}</div></div>`}
-  if(ls.length)h+=`<h3>最近症狀</h3>`+ls.map(r=>`<div class="card"><div class="card-h"><b>${esc(r['日期'])}</b>${!who?`<span class="tag">${esc(r['姓名'])}</span>`:''}${partTag(r)}</div><div class="card-h" style="margin-bottom:0">${symTags(r['症狀'])}${r['其他說明']?`<span class="note" style="margin:0">${esc(r['其他說明'])}</span>`:''}</div></div>`).join('');
+  if(ls.length){
+    h+=`<h3>最近症狀 <small style="color:var(--mut);font-weight:400">共 ${ls.length} 筆,新的在上面,可直接修改</small></h3>`;
+    let cur='';
+    ls.forEach(r=>{if(r['日期']!==cur){cur=r['日期'];h+=`<div class="dh" style="margin-top:12px">${esc(cur)} ${wday(cur)}</div>`}h+=cardHTML('symptoms',r)});
+  }
   if(lc)h+=`<h3>最近健檢</h3><div class="card"><div class="card-h"><b>${esc(lc['健檢日期'])}</b><span class="tag">${esc(lc['健檢醫院']||'')}</span></div>${lc['異常項目']?`<div class="kv bad">標記異常:${esc(lc['異常項目'])}</div>`:'<div class="note">無標記異常</div>'}</div>`;
   if(!persons().length)h+='<div class="card">第一次使用?先到「設定」新增家人。</div>';
   return h;
