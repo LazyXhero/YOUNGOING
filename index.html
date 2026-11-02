@@ -486,7 +486,8 @@ const partTag=r=>{const p=r['症狀部位大項'];if(!p)return '';const c=pcol(p
   if(ex){const e=p==='眼睛'?eyeParse(ex):null;
     more=e?[['右',e[0]],['左',e[1]]].filter(x=>x[1]!=='').map(x=>`<span class="tag part eye" style="${bg}">${x[0]} ${esc(x[1])}</span>`).join(''):`<span class="tag part eye" style="${bg}">${esc(ex)}</span>`}
   return `<span class="tag part" style="${bg}">${picon(p,16)}${esc(p)}${sb?' / '+esc(sb):''}</span>${more}`};
-function cardHTML(key,r){
+function typeTag(key){const c=ICOL[SEC[key].i]||'#d4b483';return `<span class="tag" style="color:${c};background:color-mix(in srgb,${c} 15%,transparent);font-weight:700">${ic(SEC[key].i,c,16)}${SEC[key].label}</span>`}
+function cardHTML(key,r,tagged){
   const s=SEC[key];let head='',body='';
   const who=!cfg.person&&r['姓名']?`<span class="tag">${esc(r['姓名'])}</span>`:'';
   if(key==='checkup'){
@@ -513,7 +514,7 @@ function cardHTML(key,r){
     }
     body=(kv.length?`<div class="kvs">${kv.join('')}</div>`:'')+(blk.length?`<div class="blks">${blk.join('')}</div>`:'')+(r['備註']?`<div class="note">${esc(r['備註'])}</div>`:'');
   }
-  return `<div class="card"><div class="card-h">${head}</div>${body}<div class="acts"><button class="btn sec sm" data-act="edit" data-k="${key}" data-id="${r.id}">修改</button><button class="btn sec sm" data-act="copy" data-k="${key}" data-id="${r.id}">複製</button><button class="btn warn sm" data-act="del" data-k="${key}" data-id="${r.id}">刪除</button></div></div>`;
+  return `<div class="card"><div class="card-h">${tagged?typeTag(key):''}${head}</div>${body}<div class="acts"><button class="btn sec sm" data-act="edit" data-k="${key}" data-id="${r.id}">修改</button><button class="btn sec sm" data-act="copy" data-k="${key}" data-id="${r.id}">複製</button><button class="btn warn sm" data-act="del" data-k="${key}" data-id="${r.id}">刪除</button></div></div>`;
 }
 
 /* ============ 圖表 ============ */
@@ -968,6 +969,64 @@ function analyze(name,days){
   else T('運動','info','大人運動基本目標','每週 150 分鐘有氧加 2 次肌力,每坐 45 分鐘起來動一動。',L('walk','str'));
   return S;
 }
+/* ============ 月經大補帖:算週期、下次月經、今天是哪一期 ============ */
+const PH=[
+ {n:'月經期',c:'#ff6b81',body:'子宮在排出內膜,常有下腹悶痛、腰痠、疲倦、情緒低落,經血通常先多後少。',eat:'喝溫熱的,多吃紅肉、深綠色蔬菜補鐵;冰飲、咖啡、炸物先放過自己,不然更痛。',ex:'散步、瑜伽、伸展就好,別硬幹。',rest:'早點睡,肚子和腰熱敷,今天允許自己偷懶。',lk:['stretch']},
+ {n:'濾泡期(經後)',c:'#7bd88f',body:'雌激素往上衝,精神變好、皮膚變好、體力回來了,是一個月裡最輕盈的時候。',eat:'蛋白質加蔬果加全穀,把經期流失的補回來。',ex:'最適合練肌力和有氧,衝!',rest:'專注力好,重要的事排這幾天做。',lk:['str','aero']},
+ {n:'排卵期',c:'#ffd166',body:'白帶變多、透明像蛋清,體溫微升,有人一側小腹輕微悶痛、情緒比較high。這幾天最容易懷孕。',eat:'多喝水、多蔬果,甜食別失控。',ex:'照常運動就好。',rest:'要避孕或備孕,就看這幾天!下腹劇痛要看醫生。',lk:['walk']},
+ {n:'黃體期',c:'#4cc3ff',body:'黃體素上升,體溫偏高、食慾變大、特別想吃甜的、有點懶。',eat:'少糖少鹽,多吃地瓜、南瓜、堅果、香蕉(有鎂,穩定情緒)。',ex:'中等強度的有氧或瑜伽,出汗就好。',rest:'睡飽一點,越睡不夠越想吃甜。',lk:['aero','stretch']},
+ {n:'經前期',c:'#b78cff',body:'經前症候群登場:肚子脹、胸部脹痛、長痘、水腫、失眠、脾氣像火山。',eat:'鹽減量、少喝咖啡和酒、多喝水,甜食適可而止。',ex:'散步、伸展、輕鬆瑜伽,別拚。',rest:'提早睡。情緒來了先深呼吸,別在這幾天吵架!',lk:['stretch']}
+];
+const DT=s=>new Date(s+'T00:00:00');
+const dfd=(a,b)=>Math.round((DT(b)-DT(a))/864e5);
+const addD=(s,n)=>{const d=DT(s);d.setDate(d.getDate()+n);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
+function periodInfo(name){
+  const ev=[];
+  (DB['身體狀況']||[]).filter(r=>r['姓名']===name&&r['日期']).forEach(r=>String(r['症狀']||'').split('、').forEach(e=>{const [n,o]=parseSym(e);if(n==='月經'&&o)ev.push({d:r['日期'],st:o.split('/')[0],fl:o.split('/')[1]||''})}));
+  ev.sort((a,b)=>a.d.localeCompare(b.d));
+  const starts=[];ev.filter(e=>e.st==='開始').forEach(e=>{if(!starts.length||dfd(starts[starts.length-1],e.d)>=10)starts.push(e.d)});
+  if(!starts.length)return null;
+  const gaps=[];for(let i=1;i<starts.length;i++)gaps.push(dfd(starts[i-1],starts[i]));
+  const g=gaps.filter(x=>x>=18&&x<=60).slice(-6);
+  const cl=g.length?Math.round(avgOf(g)):28;
+  const lens=starts.map(s=>{const e=ev.find(x=>x.st==='結束'&&dfd(s,x.d)>=0&&dfd(s,x.d)<=14);return e?dfd(s,e.d)+1:null}).filter(x=>x);
+  const pl=lens.length?Math.round(avgOf(lens)):5;
+  return {starts,cl,pl,reg:g.length>=2,gaps:g,lensKnown:lens.length};
+}
+function periodHTML(name,S){
+  if(S.sex!=='女')return '';
+  const I=periodInfo(name),today=TODAY();
+  let h=`<div class="card" style="border-color:rgba(255,107,129,.45)"><div class="ch"><b style="display:flex;align-items:center;gap:6px">${ic('female','#ff6b81',22)}月經大補帖</b></div>`;
+  if(!I)return h+`<div class="note" style="margin:0">還沒有月經紀錄。到「症狀」新增:部位選「婦科 → 月經」,症狀「月經」選「開始」,結束那天再記一筆「結束」。記 2 次以上,週期就會算得更準。</div><button class="btn sm" style="margin-top:8px" data-act="new" data-k="symptoms">新增身體狀況</button></div>`;
+  const last=I.starts[I.starts.length-1],cl=I.cl,pl=I.pl,ov=cl-14;
+  const d=dfd(last,today)+1;
+  const next=addD(last,cl),toNext=dfd(today,next),ovd=addD(last,ov-1);
+  const R=[[1,pl],[pl+1,ov-2],[ov-1,ov+1],[ov+2,cl-7],[cl-6,cl]].map(x=>[x[0],Math.max(x[0]-1,x[1])]);
+  /* 修正:若某一期被擠掉,讓它長度為 0 */
+  let idx=-1;for(let i=0;i<5;i++)if(d>=R[i][0]&&d<=R[i][1]){idx=i;break}
+  const late=Math.max(0,d-1-cl);
+  const ph=late?null:PH[idx<0?4:idx];
+  h+=`<div class="home-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:10px">`
+   +`<div class="card" style="margin:0"><div class="note" style="margin:0">今天是</div><div style="font-weight:700;color:${late?'#ffb347':ph.c};margin:2px 0">${late?'月經遲了 '+late+' 天':ph.n}</div><div class="note" style="margin:0">週期第 ${d} 天</div></div>`
+   +`<div class="card" style="margin:0"><div class="note" style="margin:0">預計下次月經</div><div style="font-weight:700;color:var(--pri);margin:2px 0">${md(next)}${toNext>0?'':''}</div><div class="note" style="margin:0">${toNext>0?'還有 '+toNext+' 天':toNext===0?'就是今天':'已過 '+(-toNext)+' 天'}</div></div>`
+   +`<div class="card" style="margin:0"><div class="note" style="margin:0">預計排卵日</div><div style="font-weight:700;color:var(--pri);margin:2px 0">${md(ovd)}</div><div class="note" style="margin:0">易孕期 ${md(addD(last,ov-6))}~${md(addD(last,ov))}</div></div>`
+   +`<div class="card" style="margin:0"><div class="note" style="margin:0">平均週期 / 經期</div><div style="font-weight:700;color:var(--pri);margin:2px 0">${cl} 天 / ${pl} 天</div><div class="note" style="margin:0">${I.reg?'依最近 '+I.gaps.length+' 次':I.gaps.length?'只有 '+I.gaps.length+' 次,先參考':'還沒有足夠紀錄,先用 28 天估'}</div></div></div>`;
+  /* 週期條 */
+  h+=`<div style="display:flex;height:14px;border-radius:7px;overflow:hidden;margin:4px 0 4px">${R.map((r,i)=>{const w=r[1]-r[0]+1;return w>0?`<div style="flex:${w};background:${PH[i].c};opacity:${!late&&i===(idx<0?4:idx)?1:.35}"></div>`:''}).join('')}</div>`;
+  h+=`<div style="position:relative;height:12px;margin-bottom:6px"><div style="position:absolute;left:${Math.min(100,Math.max(0,(d-.5)/cl*100))}%;transform:translateX(-50%);color:var(--pri);font-size:12px">▲ 今天</div></div>`;
+  h+=`<div class="chips" style="margin-bottom:10px">${PH.map((p,i)=>`<span class="tag" style="color:${p.c};background:color-mix(in srgb,${p.c} 15%,transparent)">${p.n}</span>`).join('')}</div>`;
+  if(late){
+    h+=`<div style="padding:9px 0;border-top:1px solid var(--line)"><span class="tag" style="color:#ffb347;background:color-mix(in srgb,#ffb347 15%,transparent)">要注意</span><div style="margin:6px 0 2px;font-weight:700">已經比預計晚 ${late} 天</div><div>${late>14?'紀錄可能漏了,先補記最近一次月經的「開始」。':'壓力、熬夜、體重變動、劇烈運動都會讓月經遲到。超過 7 天且有可能懷孕就先驗孕,連續 3 個月不規律請看婦科。'}</div></div>`;
+  }else{
+    const row=(t,x)=>`<div style="padding:7px 0;border-top:1px solid var(--line)"><i style="font-style:normal;color:${ph.c};font-weight:700">${t}</i><div>${esc(x)}</div></div>`;
+    h+=`<div style="font-weight:700;margin-bottom:4px;color:${ph.c}">今天是${ph.n},身體可能會這樣</div><div>${esc(ph.body)}</div>`
+      +row('吃',ph.eat)+row('動',ph.ex)+row('睡與心情',ph.rest)
+      +`<div class="chips" style="margin-top:7px">${ph.lk.map(k=>`<a class="chip sm" href="${YT(LK[k][1])}" target="_blank" rel="noopener" style="text-decoration:none">${ic('vitals',null,16)}看示範:${esc(LK[k][0])}</a>`).join('')}</div>`;
+  }
+  if(I.gaps.length>=2&&Math.max(...I.gaps)-Math.min(...I.gaps)>=8)h+=`<div style="padding:9px 0;border-top:1px solid var(--line);margin-top:8px"><span class="tag" style="color:#ffb347;background:color-mix(in srgb,#ffb347 15%,transparent)">要注意</span><div style="margin:6px 0 2px;font-weight:700">週期忽長忽短(${Math.min(...I.gaps)}~${Math.max(...I.gaps)} 天)</div><div>可能是壓力、睡眠、體重或荷爾蒙影響。連續 3 個月都這樣,請找婦科聊聊。</div></div>`;
+  h+=`<div class="note" style="margin-top:8px">日期是依你記錄的「開始」日推算,每個人、每個月都會有誤差,不能當避孕依據。經痛很劇烈、經血量大到 1 小時要換一片,請看醫師。</div></div>`;
+  return h;
+}
 function planHTML(){
   const ps=persons();
   if(!ps.length)return `<div class="empty">請先到「設定」新增人員</div>`;
@@ -981,6 +1040,7 @@ function planHTML(){
   if(S.missing.length){const pr=S.per;h+=`<div class="card" style="border-color:var(--warn)"><b>${esc(P.who)} 還沒填${S.missing.join('、')}</b><div class="note">補上才能判斷身高、睡眠時數、腰圍是否正常。</div>${pr.id?`<button class="btn sm" style="margin-top:8px" data-act="edit" data-k="people" data-id="${esc(pr.id)}">現在補上</button>`:''}</div>`}
   h+=`<div class="home-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">${S.tiles.map(t=>`<div class="card" style="margin:0"><div class="note" style="margin:0">${esc(t[0])}</div><div style="font-weight:700;color:var(--pri);margin:2px 0">${esc(t[1])}</div><div class="note" style="margin:0">${esc(t[2])}</div></div>`).join('')}</div>`;
   if(S.sym.length)h+=`<div class="card"><div class="ch"><b>常見症狀(天數)</b></div><div class="card-h" style="margin-bottom:0">${S.sym.slice(0,8).map(x=>`<span class="tag">${esc(x[0])} ${x[1]}</span>`).join('')}</div></div>`;
+  h+=periodHTML(P.who,S);
   ['飲食','運動','作息'].forEach(g=>{
     const Lt=S.tips.filter(t=>t.g===g).sort((a,b)=>({warn:0,info:1,ok:2}[a.lv]-{warn:0,info:1,ok:2}[b.lv]));
     if(!Lt.length)return;
@@ -1002,14 +1062,18 @@ function homeHTML(){
   let h=`<div class="dh" style="margin-top:0">${t} ${wday(t)} · ${who?esc(who):'全部成員'}</div>`;
   h+='<div class="home-grid">'+['vitals','diet','meds','symptoms','visits','checkup'].map(k=>`<button class="qa" data-act="new" data-k="${k}">${ic(SEC[k].i)}${SEC[k].label}</button>`).join('')+'</div>';
   h+=`<div class="stat"><div><b>${water}</b><small>今日飲水 ml</small></div><div><b>${medsT}</b><small>今日用藥</small></div><div><b>${symT}</b><small>今日症狀</small></div></div>`;
-  if(lv){const ks=['體重','BMI','收縮壓','舒張壓','脈搏'].filter(k=>lv[k]!==''&&lv[k]!==undefined);
-    h+=`<h3>最近一次數值 <small style="color:var(--mut);font-weight:400">${esc(lv['日期'])}${who?'':' · '+esc(lv['姓名'])}</small></h3><div class="card"><div class="kvs">${ks.map(k=>`<span class="kv"><i>${k}</i>${esc(lv[k])}</span>`).join('')||'—'}</div></div>`}
-  if(ls.length){
-    h+=`<h3>最近症狀 <small style="color:var(--mut);font-weight:400">共 ${ls.length} 筆,新的在上面,可直接修改</small></h3>`;
-    let cur='';
-    ls.forEach(r=>{if(r['日期']!==cur){cur=r['日期'];h+=`<div class="dh" style="margin-top:12px">${esc(cur)} ${wday(cur)}</div>`}h+=cardHTML('symptoms',r)});
-  }
-  if(lc)h+=`<h3>最近健檢</h3><div class="card"><div class="card-h"><b>${esc(lc['健檢日期'])}</b><span class="tag">${esc(lc['健檢醫院']||'')}</span></div>${lc['異常項目']?`<div class="kv bad">標記異常:${esc(lc['異常項目'])}</div>`:'<div class="note">無標記異常</div>'}</div>`;
+  const KEYS=['vitals','diet','meds','symptoms','visits','checkup'];
+  const hf=UI.hf||'',hn=UI.hn||60;
+  const feed=[];
+  KEYS.forEach(k=>rows(SEC[k].sheet).slice().reverse().forEach(r=>feed.push({k,r,d:String(r[k==='checkup'?'健檢日期':dkOf(SEC[k])]||''),t:String(r['時間']||'')})));
+  feed.sort((a,b)=>b.d.localeCompare(a.d)||b.t.localeCompare(a.t));
+  const shown=feed.filter(x=>!hf||x.k===hf);
+  h+=`<h3>所有紀錄 <small style="color:var(--mut);font-weight:400">共 ${shown.length} 筆,新的在上面,可直接修改</small></h3>`;
+  h+=`<div class="filters"><button class="chip ${hf?'':'on'}" data-act="hf" data-v="">全部 <small>${feed.length}</small></button>${KEYS.map(k=>{const n=feed.filter(x=>x.k===k).length;return `<button class="chip ${hf===k?'on':''}" data-act="hf" data-v="${k}">${ic(SEC[k].i,null,16)}${SEC[k].label} <small>${n}</small></button>`}).join('')}</div>`;
+  if(!shown.length)h+='<div class="empty" style="padding:20px">還沒有紀錄,按上面的按鈕新增第一筆</div>';
+  let cur='';
+  shown.slice(0,hn).forEach(x=>{if(x.d!==cur){cur=x.d;h+=`<div class="dh" style="margin-top:12px">${esc(cur)} ${wday(cur)}</div>`}h+=cardHTML(x.k,x.r,true)});
+  if(shown.length>hn)h+=`<button class="btn sec" style="width:100%" data-act="hmore">顯示更多(還有 ${shown.length-hn} 筆)</button>`;
   if(!persons().length)h+='<div class="card">第一次使用?先到「設定」新增家人。</div>';
   return h;
 }
@@ -1036,6 +1100,8 @@ document.addEventListener('click',async e=>{
   else if(a==='del'){if(confirm(k==='people'?'刪除這位成員?(他的紀錄會保留)':'確定刪除這筆紀錄?')){delRow(SEC[k].sheet,id);toast('已刪除');render()}}
   else if(a==='close')closeModal();
   else if(a==='part'){UI.f[UI.tab].part=el.dataset.p;drawList(UI.tab)}
+  else if(a==='hf'){UI.hf=el.dataset.v;UI.hn=60;render()}
+  else if(a==='hmore'){UI.hn=(UI.hn||60)+60;render()}
   else if(a==='pl'){UI.plan.who=el.dataset.w;render()}
   else if(a==='pd'){UI.plan.days=+el.dataset.v;render()}
   else if(a==='cmp'){UI.cmp=!UI.cmp;render()}
