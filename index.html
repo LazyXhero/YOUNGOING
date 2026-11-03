@@ -100,6 +100,15 @@ details.grp[open]>summary{border-bottom:1px solid var(--line);background:var(--p
 .flag.on{background:var(--warn2);border-color:var(--warn);color:var(--warn)}
 .it.bad input{border-color:var(--warn);background:var(--warn2)}
 .it.hide{display:none}
+.it .wi{display:none;vertical-align:middle;margin-left:4px}.it.bad .wi{display:inline-flex}
+.it .sd{color:var(--mut);font-weight:400;margin-left:4px}
+.ckl{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:1px 10px;padding:7px 0;border-top:1px solid var(--line)}
+.ckl .n{display:inline-flex;align-items:center;gap:5px}.ckl .v{font-weight:700;color:var(--pri)}.ckl .rf{flex-basis:100%;color:var(--mut)}
+.ckl.bad{background:rgba(255,107,107,.1);margin:0 -8px;padding:7px 8px;border-radius:8px}.ckl.bad .n,.ckl.bad .v{color:#ff6b6b}
+.ckbad{margin:8px 0;border:1px solid rgba(255,107,107,.45);border-radius:10px;padding:2px 10px}.ckbad .ckl:first-child{border-top:0}
+.ckg{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:2px 10px}
+.ckg .sm0{display:flex;align-items:center;gap:8px;padding:8px 0;font-weight:700}.ckg summary{cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 0;font-weight:700}.ckg .cnt{margin-left:auto;color:var(--mut);font-weight:400}
+.tbl td.bad{color:#ff6b6b}.tbl td .ic{vertical-align:middle;margin-right:3px}
 .tbl{overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:12px}
 .tbl table{border-collapse:collapse;width:100%}
 .tbl th,.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
@@ -157,6 +166,7 @@ let toastT;const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('
 
 /* ============ 圖示(SVG,不會亂碼)與顏色 ============ */
 const ICON={
+warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r=".9" fill="currentColor"/>',
 plan:'<path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.7 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/>',
 leaf:'<path d="M5 19C5 9 10 5 20 5c0 9-4 14-12 14"/><path d="M5 19c3-5 6-8 10-10"/>',
 home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -185,7 +195,7 @@ flask:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/>',
 female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
 virus:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/>'
 };
-const ICOL={plan:'#e6c15a',leaf:'#d4b483',home:'#d4b483',vitals:'#ff6b81',diet:'#9be564',meds:'#4cc3ff',symptoms:'#ffb347',visits:'#5eead4',checkup:'#b78cff',settings:'#c9c9c9',
+const ICOL={warn:'#ff6b6b',plan:'#e6c15a',leaf:'#d4b483',home:'#d4b483',vitals:'#ff6b81',diet:'#9be564',meds:'#4cc3ff',symptoms:'#ffb347',visits:'#5eead4',checkup:'#b78cff',settings:'#c9c9c9',
 brain:'#b78cff',eye:'#4cc3ff',ent:'#ffb347',lungs:'#5eead4',heart:'#ff6b81',stomach:'#ffd166',liver:'#d9955f',kidney:'#5b9dff',bone:'#d6c7a1',limb:'#9be564',skin:'#ff9e7a',body:'#e8e2d6',other:'#9aa0a6',drop:'#ff4d6d',flask:'#f4a259',female:'#ff8fb8',virus:'#c084fc'};
 const ic=(k,c,sz)=>`<svg class="ic" viewBox="0 0 24 24" style="color:${c||ICOL[k]||'currentColor'}${sz?`;width:${sz}px;height:${sz}px`:''}">${ICON[k]||''}</svg>`;
 $('#logo').innerHTML=ic('leaf','#d4b483',24)+'養序';
@@ -361,6 +371,25 @@ const CK=[
 ];
 const CKITEMS=CK.flatMap(g=>g[2].map(i=>({k:i[0],u:i[1],t:i[2]||'n',g:g[0]})));
 
+/* ============ 健檢標準值(一般成人參考,各院所略有不同,以報告上的標準為準) ============ */
+const REF={'BMI':[18.5,24],'腰圍':{男:[null,90],女:[null,80]},'收縮壓':[90,129],'舒張壓':[60,79],'脈搏':[60,100],
+'膽固醇':[null,200],'三酸甘油脂':[null,150],'高密度脂蛋白':{男:[40,null],女:[50,null]},'低密度脂蛋白':[null,130],
+'白血球':[4,10],'紅血球':{男:[4.5,5.9],女:[4,5.2]},'血小板':[150,400],'血紅素':{男:[13.5,17.5],女:[12,16]},'血球容積比':{男:[41,53],女:[36,46]},'平均紅血球容積':[80,100],'平均紅血球血色素濃度':[32,36],'平均紅血球血色素':[27,33],'中性球':[40,75],'嗜伊紅性球':[0,6],'鹼性球':[0,2],'淋巴球':[20,45],'單核球':[2,10],
+'飯前血糖':[70,99],'醣化血色素':[4,5.6],'促甲狀腺素TSH':[0.4,4],
+'總膽紅素':[0.2,1.2],'直接膽紅素':[0,0.3],'總血清蛋白':[6,8.3],'白蛋白':[3.5,5.2],'球蛋白':[2,3.5],'肝功能AST':[null,40],'肝功能ALT':[null,40],'鹼性磷酸酶':[35,120],'r-GT':{男:[null,60],女:[null,40]},
+'尿素氮':[7,20],'肌酸酐':{男:[0.7,1.3],女:[0.5,1.1]},'腎絲球過濾率':[60,null],'尿酸':{男:[3.5,7.2],女:[2.6,6]},'酸鹼值':[5,8],'比重':[1.005,1.03],
+'甲型胎兒蛋白':[null,8],'癌胚胎抗原':[null,5],'前列腺特異抗原':[null,4],'腫瘤指標CA-199':[null,37],'腫瘤指標CA-125':[null,35],'腫瘤指標CA-153':[null,30]};
+const sexOf=n=>{const r=(DB['人員']||[]).find(x=>x['姓名']===n);return r&&(r['性別']==='男'||r['性別']==='女')?r['性別']:''};
+const refOf=(k,sex)=>{let d=REF[k];if(!d)return null;if(k==='前列腺特異抗原'&&sex==='女')return null;if(!Array.isArray(d))d=sex?d[sex]:null;return d||null};
+const refText=(k,sex)=>{const d=refOf(k,sex);if(!d)return '';return d[0]!=null&&d[1]!=null?d[0]+'–'+d[1]:d[1]!=null?'≤ '+d[1]:'≥ '+d[0]};
+const outOf=(k,v,sex)=>{const n=parseFloat(v),d=refOf(k,sex);if(isNaN(n)||!d)return false;return (d[0]!=null&&n<d[0])||(d[1]!=null&&n>d[1])};
+const ckBad=(r,k,sex)=>String(r['異常項目']||'').split('、').includes(k)||outOf(k,r[k],sex);
+function ckReport(r,sex){
+  const groups=CK.map(g=>({name:g[0],icon:g[1],items:g[2].filter(i=>r[i[0]]!==undefined&&r[i[0]]!=='').map(i=>({k:i[0],u:i[1],v:r[i[0]],bad:ckBad(r,i[0],sex),ref:refText(i[0],sex)}))}));
+  return {groups,flat:groups.flatMap(g=>g.items)};
+}
+const ckLine=x=>`<div class="ckl ${x.bad?'bad':''}"><span class="n">${x.bad?ic('warn','#ff6b6b',16):''}${esc(x.k)}</span><span class="v">${esc(x.v)}${x.u?' <small>'+esc(x.u)+'</small>':''}</span>${x.ref?`<span class="rf">標準 ${esc(x.ref)}</span>`:''}</div>`;
+
 const dkOf=s=>s.nodate?null:(s.date||'日期');
 const fieldKeys=s=>(s.fields||[]).flatMap(f=>f.g?[]:f.t==='part'?['症狀部位大項','症狀部位細項']:[f.k]);
 function HEADERS(){
@@ -491,11 +520,12 @@ function cardHTML(key,r,tagged){
   const s=SEC[key];let head='',body='';
   const who=!cfg.person&&r['姓名']?`<span class="tag">${esc(r['姓名'])}</span>`:'';
   if(key==='checkup'){
-    const filled=CKITEMS.filter(i=>r[i.k]!==undefined&&r[i.k]!=='');
-    const bad=(r['異常項目']||'').split('、').filter(Boolean);
+    const sx=sexOf(r['姓名']),rp=ckReport(r,sx),bads=rp.flat.filter(x=>x.bad);
     head=`<b>${esc(r['健檢醫院']||'健康檢查')}</b>${who}${r['方案費用']!==''&&r['方案費用']!==undefined?`<span class="tag">$${esc(r['方案費用'])}</span>`:''}`;
-    const gc=CK.map(g=>{const n=g[2].filter(i=>r[i[0]]!==undefined&&r[i[0]]!=='').length;const c=ICOL[g[1]];return n?`<span class="tag part" style="color:${c};background:color-mix(in srgb,${c} 15%,transparent)">${ic(g[1],c,16)}${g[0]} ${n}</span>`:''}).join('');
-    body=`<div class="kvs"><span class="kv"><i>已填項目</i>${filled.length}</span>${bad.length?`<span class="kv bad"><i>標記異常</i>${esc(bad.join('、'))}</span>`:''}</div><div class="card-h" style="margin-top:6px">${gc}</div>${r['備註']?`<div class="note">${esc(r['備註'])}</div>`:''}`;
+    body=`<div class="kvs"><span class="kv"><i>已填項目</i>${rp.flat.length}</span>${bads.length?`<span class="kv bad"><i>異常</i>${bads.length} 項</span>`:''}</div>`
+      +(bads.length?`<div class="ckbad">${bads.map(ckLine).join('')}</div>`:'')
+      +rp.groups.filter(g=>g.items.length).map(g=>{const nb=g.items.filter(x=>x.bad).length,ok=g.items.filter(x=>!x.bad);const cnt=`<span class="cnt">${g.items.length} 項${nb?` · <span style="color:#ff6b6b">${nb} 異常</span>`:''}</span>`;const hd=`${ic(g.icon,null,18)}<span style="color:${ICOL[g.icon]}">${esc(g.name)}</span>${cnt}`;return ok.length?`<details class="ckg"><summary>${hd}</summary>${ok.map(ckLine).join('')}</details>`:`<div class="ckg"><div class="sm0">${hd}</div></div>`}).join('')
+      +(r['備註']?`<div class="note">${esc(r['備註'])}</div>`:'');
   }else if(key==='symptoms'){
     head=`<b></b>${who}${partTag(r)}`;
     const teeth=String(r['症狀']||'').split('、').map(parseSym).filter(x=>{const c=x[1].split('/');return c.length===4&&(c[1]==='乳牙'||c[1]==='恆牙')}).map(x=>{const c=x[1].split('/');return `<div class="note" style="margin:6px 0 0">${toothHint(c)}</div>${toothPanel(c,c[1],true)}`}).join('');
@@ -532,6 +562,7 @@ function panel(key,title,rg,body){
   const hc=(UI.f[key]||{}).hc;
   return `<div class="card"><div class="ch"><b>${title}</b><span class="chips">${hc?'':rg}<button class="chip sm" data-act="hc">${hc?'顯示圖表':'隱藏'}</button></span></div>${hc?'':body}</div>`;
 }
+const chartW=()=>Math.max(280,Math.min(880,((document.getElementById('main')||{}).clientWidth||360)-60));
 function lineSVG(series){
   series=series.filter(s=>s.pts.length);
   if(!series.length)return nodata('這段期間還沒有資料');
@@ -540,32 +571,32 @@ function lineSVG(series){
   if(x1-x0<1){x0-=1;x1+=1}
   if(y1===y0){y0-=1;y1+=1}
   const pad=(y1-y0)*.15;y0-=pad;y1+=pad;
-  const W=360,H=170,L=38,R=14,T=14,B=26;
+  const W=chartW(),H=190,L=48,R=16,T=16,B=32,FS=15;
   const sx=x=>L+(x-x0)/(x1-x0)*(W-L-R),sy=y=>T+(1-(y-y0)/(y1-y0))*(H-T-B);
   let g='';
-  for(let i=0;i<4;i++){const v=y0+(y1-y0)*i/3,y=sy(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#27272b"/><text x="${L-5}" y="${y+4}" text-anchor="end" fill="#8d8a84" font-size="11">${nf(v)}</text>`}
-  g+=`<text x="${L}" y="${H-6}" fill="#8d8a84" font-size="11">${md(dateOf(x0))}</text><text x="${W-R}" y="${H-6}" text-anchor="end" fill="#8d8a84" font-size="11">${md(dateOf(x1))}</text>`;
+  for(let i=0;i<4;i++){const v=y0+(y1-y0)*i/3,y=sy(v);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#27272b"/><text x="${L-5}" y="${y+4}" text-anchor="end" fill="#8d8a84" font-size="${FS}">${nf(v)}</text>`}
+  g+=`<text x="${L}" y="${H-6}" fill="#8d8a84" font-size="${FS}">${md(dateOf(x0))}</text><text x="${W-R}" y="${H-6}" text-anchor="end" fill="#8d8a84" font-size="${FS}">${md(dateOf(x1))}</text>`;
   series.forEach(s=>{
     const pts=s.pts.map(p=>sx(p.x).toFixed(1)+','+sy(p.y).toFixed(1)).join(' ');
     if(s.pts.length>1)g+=`<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
     s.pts.forEach(p=>{g+=`<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="3.4" fill="#0a0a0b" stroke="${s.color}" stroke-width="2"><title>${esc(s.name)} ${md(p.d)} : ${nf(p.y)}</title></circle>`});
     const l=s.pts[s.pts.length-1];
-    g+=`<text x="${Math.min(sx(l.x),W-R)}" y="${sy(l.y)-9}" text-anchor="end" fill="${s.color}" font-size="12" font-weight="700">${nf(l.y)}</text>`;
+    g+=`<text x="${Math.min(sx(l.x),W-R)}" y="${sy(l.y)-9}" text-anchor="end" fill="${s.color}" font-size="${FS}" font-weight="700">${nf(l.y)}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`;
 }
 function barSVG(cells,unit){
-  const W=360,H=150,L=36,R=8,T=12,B=24,n=cells.length;
+  const W=chartW(),H=170,L=44,R=8,T=14,B=30,FS=15,n=cells.length;
   const tot=c=>c.segs.reduce((a,s)=>a+s.v,0);
   let mx=Math.ceil(Math.max(1,...cells.map(tot)));
   const ticks=mx<=4?[...Array(mx+1).keys()]:[0,mx/2,mx];
-  const bw=(W-L-R)/n,w=Math.max(3,bw*.68),every=Math.ceil(n/6);
+  const bw=(W-L-R)/n,w=Math.max(3,bw*.68),every=Math.max(1,Math.ceil(n*52/(W-L-R)));
   let g='';
-  ticks.forEach(v=>{const y=T+(1-v/mx)*(H-T-B);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#27272b"/><text x="${L-5}" y="${y+4}" text-anchor="end" fill="#8d8a84" font-size="11">${nf(v)}</text>`});
+  ticks.forEach(v=>{const y=T+(1-v/mx)*(H-T-B);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#27272b"/><text x="${L-5}" y="${y+5}" text-anchor="end" fill="#8d8a84" font-size="${FS}">${nf(v)}</text>`});
   cells.forEach((c,i)=>{
     let y=H-B;const x=L+i*bw+(bw-w)/2;
     c.segs.forEach(sg=>{const h=sg.v/mx*(H-T-B);y-=h;g+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(h,1).toFixed(1)}" rx="2" fill="${sg.c}"><title>${c.label} ${esc(sg.n)} ${nf(sg.v)}${unit||''}</title></rect>`});
-    if((n-1-i)%every===0)g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle" fill="#8d8a84" font-size="11">${c.label}</text>`;
+    if((n-1-i)%every===0)g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle" fill="#8d8a84" font-size="${FS}">${c.label}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`;
 }
@@ -614,11 +645,12 @@ function chartHTML(key,rows){
   if(key==='visits')return barPanel(key,'每月就診次數(近 12 個月)',rows,f,{months:1,val:()=>1,grp:r=>r['症狀部位大項'],gcol:n=>pcol(n),unit:' 次',alwaysLegend:1,top:r=>r['醫院名稱']?[r['醫院名稱']]:[],stat:t=>`近 12 個月就診 ${t} 次`});
   return '';
 }
-function ckChart(who,f){
+function ckChart(whos,f){
   if(!f.item)return '';
   const it=CKITEMS.find(i=>i.k===f.item);
-  const pts=(DB['健檢紀錄']||[]).filter(r=>r['姓名']===who&&r['健檢日期']).map(r=>({x:dayN(r['健檢日期']),y:numOf(r[f.item]),d:r['健檢日期']})).filter(p=>p.y!==null).sort((a,b)=>a.x-b.x);
-  const body=pts.length?lineSVG([{name:f.item,color:'#d4b483',pts}]):nodata('這個項目是文字紀錄或還沒有數字,沒有圖表');
+  const series=whos.map((who,i)=>({name:who,color:whos.length>1?PAL[i%PAL.length]:'#d4b483',pts:(DB['健檢紀錄']||[]).filter(r=>r['姓名']===who&&r['健檢日期']).map(r=>({x:dayN(r['健檢日期']),y:numOf(r[f.item]),d:r['健檢日期']})).filter(p=>p.y!==null).sort((a,b)=>a.x-b.x)})).filter(x=>x.pts.length);
+  const rf=whos.map(w=>{const t=refText(f.item,sexOf(w));return t?(whos.length>1?w+' ':'')+'標準 '+t:''}).filter(Boolean).join(' · ');
+  const body=series.length?lineSVG(series)+(series.length>1?legend(series.map(x=>[x.name,x.color])):'')+(rf?`<div class="note">${esc(rf)}</div>`:''):nodata('這個項目是文字紀錄或還沒有數字,沒有圖表');
   return `<div class="card"><div class="ch"><b>${esc(f.item)}${it&&it.u?' '+esc(it.u):''} 趨勢</b><button class="chip sm" data-act="ckitem" data-k="">關閉</button></div>${body}</div>`;
 }
 
@@ -764,14 +796,14 @@ function openCheckup(row,mode){
   <div class="fld"><label>健檢醫院</label><input name="健檢醫院" value="${esc(v('健檢醫院'))}"></div>
   <div class="fld"><label>方案費用 <small>元</small></label><input type="number" inputmode="decimal" name="方案費用" value="${esc(v('方案費用'))}"></div>
   <div class="fld full"><label>備註</label><textarea name="備註" rows="2">${esc(v('備註'))}</textarea></div></div>
-  <div class="gh" style="margin:14px 0 8px">檢查項目(依大項分區,按「異常」可標記)</div>
+  <div class="gh" style="margin:14px 0 8px">檢查項目(有標準值的項目,超出會自動標紅色警示;也可以手動按「異常」)</div>
   <input type="search" id="iq" placeholder="搜尋項目,例如 肝、血糖、LDL" style="margin-bottom:10px">`;
   CK.forEach((g,gi)=>{
     const n=g[2].filter(i=>v(i[0])!=='').length;
     h+=`<details class="grp" data-g="${gi}" ${n?'open':''}><summary>${ic(g[1],null,22)}<span style="color:${ICOL[g[1]]}">${g[0]}</span><span class="cnt">已填 <span class="gn">${n}</span>/${g[2].length}</span></summary><div class="items">`;
     g[2].forEach(i=>{
       const bad=flags.has(i[0]);
-      h+=`<div class="it ${bad?'bad':''}" data-k="${esc(i[0])}"><label>${esc(i[0])}${i[1]?` <small style="color:var(--pri)">${i[1]}</small>`:''}</label><div class="row"><input type="${i[2]==='t'?'text':'number'}" ${i[2]==='t'?'':'step="any" inputmode="decimal"'} name="${esc(i[0])}" value="${esc(v(i[0]))}" ${i[0]==='BMI'?'readonly':''}><button type="button" class="flag ${bad?'on':''}" title="標記異常">異常</button></div></div>`;
+      h+=`<div class="it ${bad?'bad':''}" data-k="${esc(i[0])}"><label>${esc(i[0])}${i[1]?` <small style="color:var(--pri)">${i[1]}</small>`:''}<span class="wi">${ic('warn','#ff6b6b',16)}</span><small class="sd"></small></label><div class="row"><input type="${i[2]==='t'?'text':'number'}" ${i[2]==='t'?'':'step="any" inputmode="decimal"'} name="${esc(i[0])}" value="${esc(v(i[0]))}" ${i[0]==='BMI'?'readonly':''}><button type="button" class="flag ${bad?'on':''}" title="標記異常">異常</button></div></div>`;
     });
     h+='</div></details>';
   });
@@ -779,12 +811,18 @@ function openCheckup(row,mode){
   openModal((mode==='edit'?'修改':mode==='copy'?'複製':'新增')+'健康檢查',h,'<button class="btn sec" data-act="close">取消</button><button class="btn" id="saveBtn">儲存</button>');
   const F=$('#F');
   const recount=()=>F.querySelectorAll('details.grp').forEach(d=>{d.querySelector('.gn').textContent=[...d.querySelectorAll('input')].filter(x=>x.value!=='').length});
+  const setBad=(it,on)=>{const k=it.dataset.k;on?flags.add(k):flags.delete(k);it.classList.toggle('bad',on);it.querySelector('.flag').classList.toggle('on',on)};
+  const autoOne=(it,sex)=>{const k=it.dataset.k,inp=it.querySelector('input'),sd=it.querySelector('.sd'),rt=refText(k,sex);sd.textContent=rt?'標準 '+rt:'';if(refOf(k,sex))setBad(it,outOf(k,inp.value,sex))};
+  const autoAll=()=>{const sex=sexOf(F.elements['姓名'].value);F.querySelectorAll('.it').forEach(it=>autoOne(it,sex))};
+  autoAll();
   F.addEventListener('input',e=>{
     if(e.target.id==='iq')return;
+    if(e.target.name==='姓名')autoAll();
+    else{const it=e.target.closest('.it');if(it)autoOne(it,sexOf(F.elements['姓名'].value))}
     if(e.target.name==='身高'||e.target.name==='體重'){F.elements['BMI'].value=bmi(F.elements['身高'].value,F.elements['體重'].value)}
     recount();
   });
-  F.addEventListener('click',e=>{const f=e.target.closest('.flag');if(!f)return;const it=f.closest('.it'),k=it.dataset.k;flags.has(k)?flags.delete(k):flags.add(k);f.classList.toggle('on');it.classList.toggle('bad')});
+  F.addEventListener('click',e=>{const f=e.target.closest('.flag');if(!f)return;const it=f.closest('.it');setBad(it,!flags.has(it.dataset.k))});
   $('#iq').oninput=e=>{
     const q=e.target.value.trim().toLowerCase();
     F.querySelectorAll('details.grp').forEach(d=>{
@@ -806,22 +844,27 @@ function openCheckup(row,mode){
 /* ============ 健檢歷年比較 ============ */
 function drawCompare(){
   const L=$('#list'),f=UI.f.checkup=UI.f.checkup||{};
-  const who=cfg.person||persons()[0];
-  if(!who){L.innerHTML='<div class="empty">請先新增人員</div>';return}
-  const recs=(DB['健檢紀錄']||[]).filter(r=>r['姓名']===who).sort((a,b)=>(b['健檢日期']||'').localeCompare(a['健檢日期']||'')).slice(0,8);
-  let h=`<div class="bar"><b>${esc(who)}</b><select id="cg" style="flex:1"><option value="">全部大項</option>${CK.map((g,i)=>`<option value="${i}" ${String(f.cg)===String(i)?'selected':''}>${g[0]}</option>`).join('')}</select><input type="search" id="ci" placeholder="搜尋項目" value="${esc(f.ci||'')}" style="flex:1"></div>`;
-  if(!recs.length){L.innerHTML=h+'<div class="empty">'+esc(who)+' 還沒有健檢紀錄</div>';bindCmp();return}
-  h+=ckChart(who,f)+'<div class="note" style="margin:0 0 8px">點項目名稱可以看趨勢圖</div><div class="tbl"><table><tr><th>項目</th>'+recs.map(r=>`<th>${esc(r['健檢日期'])}<br><small style="font-weight:400">${esc(r['健檢醫院']||'')}</small></th>`).join('')+'</tr>';
-  CK.forEach((g,gi)=>{
-    if(f.cg!==undefined&&f.cg!==''&&String(f.cg)!==String(gi))return;
-    const rows=g[2].filter(i=>(!f.ci||i[0].toLowerCase().includes(f.ci.toLowerCase()))&&recs.some(r=>r[i[0]]!==undefined&&r[i[0]]!==''));
-    if(!rows.length)return;
-    h+=`<tr class="gr"><td colspan="${recs.length+1}" style="color:${ICOL[g[1]]}">${ic(g[1],null,18)} ${g[0]}</td></tr>`;
-    rows.forEach(i=>{
-      h+=`<tr><td class="ck" data-act="ckitem" data-k="${esc(i[0])}">${esc(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</td>`+recs.map(r=>{const bad=String(r['異常項目']||'').split('、').includes(i[0]);const x=r[i[0]];return `<td class="${bad?'bad':''}">${x===undefined||x===''?'—':esc(x)}${bad?' (異常)':''}</td>`}).join('')+'</tr>';
+  const ps=cfg.person?[cfg.person]:persons();
+  if(!ps.length){L.innerHTML='<div class="empty">請先新增人員</div>';return}
+  let h=`<div class="bar"><select id="cg" style="flex:1"><option value="">全部大項</option>${CK.map((g,i)=>`<option value="${i}" ${String(f.cg)===String(i)?'selected':''}>${g[0]}</option>`).join('')}</select><input type="search" id="ci" placeholder="搜尋項目" value="${esc(f.ci||'')}" style="flex:1"></div>`;
+  const blocks=ps.map(who=>({who,sex:sexOf(who),recs:(DB['健檢紀錄']||[]).filter(r=>r['姓名']===who).sort((a,b)=>(b['健檢日期']||'').localeCompare(a['健檢日期']||'')).slice(0,8)})).filter(b=>b.recs.length);
+  if(!blocks.length){L.innerHTML=h+'<div class="empty">'+(cfg.person?esc(cfg.person)+' ':'')+'還沒有健檢紀錄</div>';bindCmp();return}
+  h+=ckChart(blocks.map(b=>b.who),f)+'<div class="note" style="margin:0 0 8px">點項目名稱可以看趨勢圖;紅字加警示符號 = 超出標準值,或你標記為異常</div>';
+  blocks.forEach(b=>{
+    const {who,sex,recs}=b;
+    h+=`<h3 style="margin:14px 2px 8px;color:var(--pri)">${esc(who)}${sex?'':' <small style="color:var(--mut);font-weight:400">(未填性別,部分標準值不顯示)</small>'}</h3><div class="tbl"><table><tr><th>項目</th><th>標準</th>`+recs.map(r=>`<th>${esc(r['健檢日期'])}<br><small style="font-weight:400">${esc(r['健檢醫院']||'')}</small></th>`).join('')+'</tr>';
+    CK.forEach((g,gi)=>{
+      if(f.cg!==undefined&&f.cg!==''&&String(f.cg)!==String(gi))return;
+      const rows=g[2].filter(i=>(!f.ci||i[0].toLowerCase().includes(f.ci.toLowerCase()))&&recs.some(r=>r[i[0]]!==undefined&&r[i[0]]!==''));
+      if(!rows.length)return;
+      h+=`<tr class="gr"><td colspan="${recs.length+2}" style="color:${ICOL[g[1]]}">${ic(g[1],null,18)} ${g[0]}</td></tr>`;
+      rows.forEach(i=>{
+        h+=`<tr><td class="ck" data-act="ckitem" data-k="${esc(i[0])}">${esc(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(x)}</td>`}).join('')+'</tr>';
+      });
     });
+    h+='</table></div>';
   });
-  h+='</table></div><div class="note">最多顯示最近 8 次;紅字代表你在該次標記為異常。</div>';
+  h+='<div class="note">每人最多顯示最近 8 次。標準值是一般成人的參考範圍,各醫院略有不同,請以你的報告為準。</div>';
   L.innerHTML=h;bindCmp();
 }
 function bindCmp(){
@@ -838,15 +881,17 @@ const num=v=>{const n=parseFloat(v);return isNaN(n)?null:n};
 const YT=q=>'https://www.youtube.com/results?search_query='+encodeURIComponent(q);
 const LK={walk:['快走示範','快走 正確姿勢 運動'],rope:['跳繩教學','跳繩 新手 教學'],stretch:['伸展操','全身伸展 10分鐘 放鬆'],core:['核心訓練','核心訓練 居家 新手'],str:['居家肌力','居家肌力訓練 新手 全身'],aero:['居家有氧','居家有氧運動 20分鐘 不跳'],grow:['長高運動','兒童 長高 運動 伸展'],kid:['兒童體能遊戲','兒童 體能 遊戲 親子 運動'],eye:['護眼操','護眼 20-20-20 眼睛放鬆操'],bone:['骨骼保健運動','增加骨質密度 運動']};
 const L=(...k)=>k.map(x=>LK[x]);
+const hs=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))>>>0;return h};
+const pick=a=>Array.isArray(a)?a[(Math.floor(dayN(TODAY()))+hs(a[0]))%a.length]:a;
 const SYMGRP=[
- {n:'睡眠與精神',re:/^(失眠|易醒|夜驚|打鼾|疲累)$/,g:'作息',tip:'睡不好又累,什麼都做不好。固定睡覺時間、睡前關螢幕、白天去曬太陽。'},
- {n:'腸胃',re:/^(便秘|腹瀉|腹脹|胃痛|胃酸逆流|脹氣|噁心|嘔吐|腹痛|抽肚|食慾差|排便)$/,g:'飲食',tip:'腸胃在抗議!慢慢嚼、多吃菜、少吃炸、多喝水,睡前 3 小時別再吃。'},
- {n:'鼻過敏與呼吸道',re:/^(鼻水|鼻塞|打噴嚏|鼻子癢|乾鼻涕|鼻血|乾咳|咳痰|喉嚨痛|喉嚨癢|聲音沙啞|喉嚨有痰)$/,g:'作息',tip:'鼻子喉嚨在鬧。寢具每週洗、房間要通風、早晚加外套。超過 10 天或發燒就去看醫生。'},
- {n:'不自主動作',re:/^(眨眼|飄眼|扭脖|聳肩|清喉嚨)$/,g:'作息',tip:'眨眼、清喉嚨常是累了或緊張。睡飽、少螢幕、多去戶外玩,別一直糾正他。超過 1 個月就問小兒科。'},
- {n:'眼睛不適',re:/^(眼睛癢|紅腫|流淚|眼屎多|視力模糊|怕光)$/,g:'作息',tip:'眼睛在求救!看 30 分鐘就看遠 20 秒,每天戶外 2 小時,不要用手揉。',l:L('eye')},
- {n:'肌肉骨骼',re:/^(扭傷|痠痛|僵硬|抽筋|無力|閃到|疼痛|脖子痛|脖子僵硬|腫脹)$/,g:'運動',tip:'身體硬邦邦。運動前後各伸展 5-10 分鐘,久坐每 45 分鐘起來動一動。',l:L('stretch','core')},
- {n:'情緒與專注',re:/^(煩躁|焦慮|注意力不集中)$/,g:'作息',tip:'煩躁又不專心?睡飽、少吃糖、每天動 30 分鐘,效果比你想的大。',l:L('aero')},
- {n:'皮膚',re:/^(紅疹|癢|乾燥|脫皮|濕疹|蚊蟲叮咬)$/,g:'作息',tip:'皮膚鬧脾氣。洗澡水別太燙,洗完 3 分鐘內擦乳液,穿棉質衣服。'}
+ {n:'睡眠與精神',re:/^(失眠|易醒|夜驚|打鼾|疲累)$/,g:'作息',tip:['睡不好又累,什麼都做不好。固定睡覺時間、睡前關螢幕、白天去曬太陽。','累到什麼都不想做?固定睡覺時間,睡前關螢幕,白天曬曬太陽。']},
+ {n:'腸胃',re:/^(便秘|腹瀉|腹脹|胃痛|胃酸逆流|脹氣|噁心|嘔吐|腹痛|抽肚|食慾差|排便)$/,g:'飲食',tip:['腸胃在抗議!慢慢嚼、多吃菜、少吃炸、多喝水,睡前 3 小時別再吃。','肚子在鬧脾氣。吃慢一點、多吃菜、少吃炸、多喝水。']},
+ {n:'鼻過敏與呼吸道',re:/^(鼻水|鼻塞|打噴嚏|鼻子癢|乾鼻涕|鼻血|乾咳|咳痰|喉嚨痛|喉嚨癢|聲音沙啞|喉嚨有痰)$/,g:'作息',tip:['鼻子喉嚨在鬧。寢具每週洗、房間要通風、早晚加外套。超過 10 天或發燒就去看醫生。','鼻子和喉嚨不舒服?寢具洗一洗、窗戶開一開、早晚加外套。超過 10 天或發燒就看醫生。']},
+ {n:'不自主動作',re:/^(眨眼|飄眼|扭脖|聳肩|清喉嚨)$/,g:'作息',tip:['眨眼、清喉嚨常是累了或緊張。睡飽、少螢幕、多去戶外玩,別一直糾正他。超過 1 個月就問小兒科。','眨眼、清喉嚨多半是累或緊張。睡飽、少螢幕、多玩,別一直唸他。超過 1 個月問小兒科。']},
+ {n:'眼睛不適',re:/^(眼睛癢|紅腫|流淚|眼屎多|視力模糊|怕光)$/,g:'作息',tip:['眼睛在求救!看 30 分鐘就看遠 20 秒,每天戶外 2 小時,不要用手揉。','眼睛在喊累!看 30 分鐘就望遠 20 秒,每天戶外 2 小時,別用手揉。'],l:L('eye')},
+ {n:'肌肉骨骼',re:/^(扭傷|痠痛|僵硬|抽筋|無力|閃到|疼痛|脖子痛|脖子僵硬|腫脹)$/,g:'運動',tip:['身體硬邦邦。運動前後各伸展 5-10 分鐘,久坐每 45 分鐘起來動一動。','全身硬得像木板。運動前後伸展 5-10 分鐘,久坐 45 分鐘就起來動。'],l:L('stretch','core')},
+ {n:'情緒與專注',re:/^(煩躁|焦慮|注意力不集中)$/,g:'作息',tip:['煩躁又不專心?睡飽、少吃糖、每天動 30 分鐘,效果比你想的大。','心煩氣躁?睡飽一點、少吃糖、動 30 分鐘,效果會嚇到你。'],l:L('aero')},
+ {n:'皮膚',re:/^(紅疹|癢|乾燥|脫皮|濕疹|蚊蟲叮咬)$/,g:'作息',tip:['皮膚鬧脾氣。洗澡水別太燙,洗完 3 分鐘內擦乳液,穿棉質衣服。','皮膚在抗議。洗澡水別太燙,洗完 3 分鐘內擦乳液,穿棉質衣服。']}
 ];
 const CKTIP=[
  [/膽固醇|低密度|三酸甘油脂|LDL/,'飲食','血脂紅字,血管快塞住了!少吃炸物肥肉內臟,多吃燕麥、豆類、魚,再加每天快走。',L('walk')],
@@ -873,12 +918,16 @@ function analyze(name,days){
   const lastV=k=>{for(let i=vit.length-1;i>=0;i--){const n=num(vit[i][k]);if(n!==null)return n}return null};
   const S={name,days,age,sex,per,diet,tips:[],tiles:[],missing:[]};
   if(!sex)S.missing.push('性別');if(age===null)S.missing.push('生日');
-  const T=(g,lv,why,tip,links)=>S.tips.push({g,lv,why,tip,links:links||[]});
+  const T=(g,lv,why,tip,links)=>S.tips.push({g,lv,why,tip:pick(tip),links:links||[]});
   const child=age!==null&&age<18;
   /* --- 飲食 --- */
   const dd=[...new Set(diet.map(r=>r['日期']))];S.dietDays=dd.length;
   const cnt=k=>new Set(diet.filter(r=>String(r[k]||'').trim()).map(r=>r['日期'])).size;
-  const fried=cnt('炸物'),proc=cnt('加工食品'),drink=cnt('飲料'),late=cnt('宵夜');
+  const fried=cnt('炸物'),proc=cnt('加工食品'),late=cnt('宵夜');
+  const drs=r=>String(r['飲料']||'').split(/[\n,，、;；]+/).map(x=>x.trim()).filter(Boolean);
+  const sweet=x=>!/無糖|零糖|不加糖|零卡|白開水|開水|氣泡水|礦泉水/.test(x);
+  const drink=new Set(diet.filter(r=>drs(r).some(sweet)).map(r=>r['日期'])).size;
+  const noSug=new Set(diet.filter(r=>drs(r).length&&!drs(r).some(sweet)).map(r=>r['日期'])).size;
   const noBf=dd.filter(d=>!diet.some(r=>r['日期']===d&&String(r['早餐']||'').trim())).length;
   const wAvg=avgOf(dd.map(d=>diet.filter(r=>r['日期']===d).reduce((a,r)=>a+(num(r['飲水'])||0),0)).filter(x=>x>0));
   const vegAvg=avgOf(diet.map(r=>num(r['蔬果份數'])).filter(x=>x!==null));
@@ -886,17 +935,18 @@ function analyze(name,days){
   const wTarget=wt?Math.max(1000,Math.min(2500,Math.round(wt*30/50)*50)):1500;
   S.tiles.push(['飲食紀錄',dd.length+' 天','最近 '+days+' 天中']);
   S.tiles.push(['平均飲水',wAvg===null?'無紀錄':Math.round(wAvg)+' ml','目標約 '+wTarget+' ml']);
-  if(dd.length<Math.max(3,days/4))T('飲食','info',`最近 ${days} 天只記了 ${dd.length} 天`,'紀錄越完整,建議越準。每天花 1 分鐘記一下三餐和喝水!');
+  if(dd.length<Math.max(3,days/4))T('飲食','info',`最近 ${days} 天只記了 ${dd.length} 天`,['紀錄越完整,建議越準。每天花 1 分鐘記一下三餐和喝水!','記得越多,我越懂你。今天先記一餐吧!']);
   if(dd.length){
-    if(fried/dd.length>=.3)T('飲食','warn',`${dd.length} 天裡有 ${fried} 天吃炸物`,'炸物吃太多,會變大胖子,血管被油塞滿超可怕!這週改烤、蒸、煮。');
-    if(proc/dd.length>=.3)T('飲食','warn',`${dd.length} 天裡有 ${proc} 天吃加工食品`,'香腸、泡麵、零食天天吃,鹽和添加物爆表,腎臟血壓都在哭。換成水煮蛋、水果、堅果。');
-    if(drink/dd.length>=.4)T('飲食','warn',`${dd.length} 天裡有 ${drink} 天喝飲料`,'手搖飲一杯的糖,比十顆方糖還多,又胖又蛀牙。換白開水、無糖茶!');
-    if(noBf/dd.length>=.3)T('飲食','warn',`${dd.length} 天裡有 ${noBf} 天沒吃早餐`,'不吃早餐,上午腦袋當機、中午暴吃。一顆蛋加一杯豆漿就搞定。');
-    if(late/dd.length>=.2)T('飲食','warn',`${dd.length} 天裡有 ${late} 天吃宵夜`,'宵夜是胖子製造機,還害你睡不好。晚上 8 點後只喝水。');
-    if(vegAvg!==null&&vegAvg<4)T('飲食','warn',`平均每天蔬果 ${vegAvg.toFixed(1)} 份`,'蔬果太少,便秘又缺維生素。每餐一個拳頭的菜,每天兩份水果。');
-    if(wAvg!==null&&wAvg<wTarget*0.7)T('飲食','warn',`平均每天喝水 ${Math.round(wAvg)} ml,目標約 ${wTarget} ml`,'水喝太少,血變濃、皮膚乾、便秘找上門。現在,先去喝一杯!');
+    if(fried/dd.length>=.3)T('飲食','warn',`${dd.length} 天裡有 ${fried} 天吃炸物`,['炸物吃太多,會變大胖子,血管被油塞滿超可怕!這週改烤、蒸、煮。','再炸下去,血管會變成塞滿油的下水道!這週試試烤、蒸、氣炸。','外酥內油,血管最怕!這週挑 3 天,把炸的換成烤的。']);
+    if(proc/dd.length>=.3)T('飲食','warn',`${dd.length} 天裡有 ${proc} 天吃加工食品`,['香腸、泡麵、零食天天吃,鹽和添加物爆表,腎臟血壓都在哭。換成水煮蛋、水果、堅果。','加工食品是鹽巴炸彈,腎臟默默在扛。今天換一樣:水煮蛋、水果、堅果。','一碗泡麵的鈉就快超標了!這週少吃兩次,換成真正的食物。']);
+    if(drink/dd.length>=.4)T('飲食','warn',`${dd.length} 天裡有 ${drink} 天喝飲料`,['手搖飲一杯的糖,比十顆方糖還多,又胖又蛀牙。換白開水、無糖茶!','含糖飲料是液體的肥肉,喝了不飽卻很會胖。換成無糖茶吧!','你的牙齒和腰圍正在向手搖飲求饒。這週改喝無糖的!']);
+    if(noSug>=3&&drink/dd.length<.4)T('飲食','ok',`${noSug} 天喝無糖飲料`,['選無糖就對了,身體會感謝你!','無糖茶是好朋友,繼續保持!','少喝一杯糖,等於幫血管洗澡。']);
+    if(noBf/dd.length>=.3)T('飲食','warn',`${dd.length} 天裡有 ${noBf} 天沒吃早餐`,['不吃早餐,上午腦袋當機、中午暴吃。一顆蛋加一杯豆漿就搞定。','早餐是大腦的開機鍵,不按它整個上午都在重開機。蛋加豆漿,3 分鐘搞定。','空著肚子出門,中午一定報復性暴吃。吐司夾蛋也好,吃點東西吧!']);
+    if(late/dd.length>=.2)T('飲食','warn',`${dd.length} 天裡有 ${late} 天吃宵夜`,['宵夜是胖子製造機,還害你睡不好。晚上 8 點後只喝水。','半夜的肚子餓大多是習慣,不是真的餓。8 點後只喝水,刷完牙就鎖上嘴巴!','宵夜一口一口,體重一斤一斤。晚上 8 點後打烊。']);
+    if(vegAvg!==null&&vegAvg<4)T('飲食','warn',`平均每天蔬果 ${vegAvg.toFixed(1)} 份`,['蔬果太少,便秘又缺維生素。每餐一個拳頭的菜,每天兩份水果。','菜吃太少,腸子在罷工。每餐先吃菜,再吃肉和飯。','蔬果是免費的保養品!每餐一拳頭的菜,每天兩顆水果。']);
+    if(wAvg!==null&&wAvg<wTarget*0.7)T('飲食','warn',`平均每天喝水 ${Math.round(wAvg)} ml,目標約 ${wTarget} ml`,['水喝太少,血變濃、皮膚乾、便秘找上門。現在,先去喝一杯!','身體六成是水,你現在只供應一半。放下手機,先喝一杯!','口渴才喝就太晚了。水杯放在看得到的地方,每小時喝兩口。']);
     else if(wAvg===null)T('飲食','info','沒有喝水紀錄','在飲食作息頁按 +250、+500 快速記水量。');
-    if(!S.tips.some(t=>t.g==='飲食'&&t.lv==='warn'))T('飲食','ok','飲食沒有明顯警訊','三餐有菜有蛋白質,繼續保持,你很棒!');
+    if(!S.tips.some(t=>t.g==='飲食'&&t.lv==='warn'))T('飲食','ok','飲食沒有明顯警訊',['三餐有菜有蛋白質,繼續保持,你很棒!','吃得很穩!繼續保持,身體會感謝你。','飲食這關過了,給自己一個讚!']);
   }
   /* --- 睡眠、運動、螢幕 --- */
   const need=age===null?[7,9]:age<6?[10,13]:age<13?[9,12]:age<18?[8,10]:[7,9];
@@ -904,22 +954,22 @@ function analyze(name,days){
   const slAvg=avgOf(sl);
   S.tiles.push(['平均睡眠',slAvg===null?'無紀錄':slAvg.toFixed(1)+' 小時','建議 '+need[0]+'-'+need[1]+' 小時']);
   if(slAvg===null)T('作息','info','還沒有睡眠紀錄','到「飲食作息」填睡覺和起床時間,會自動算出睡了幾小時。');
-  else if(slAvg<need[0]-0.3)T('作息','warn',`平均只睡 ${slAvg.toFixed(1)} 小時(建議 ${need[0]}-${need[1]})`,child?'睡不夠,長不高又變笨,還更容易胖。今晚提早 30 分鐘關螢幕上床!':'睡不夠,免疫變差、食慾失控、人也變笨。今晚提早 30 分鐘上床!');
-  else T('作息','ok',`平均睡 ${slAvg.toFixed(1)} 小時`,'睡眠夠了,這點超棒!');
+  else if(slAvg<need[0]-0.3)T('作息','warn',`平均只睡 ${slAvg.toFixed(1)} 小時(建議 ${need[0]}-${need[1]})`,child?['睡不夠,長不高又變笨,還更容易胖。今晚提早 30 分鐘關螢幕上床!','長高的荷爾蒙是睡著才出來的!今晚提早 30 分鐘關燈。','睡眠債是要還的。今晚手機去充電,人也去充電。']:['睡不夠,免疫變差、食慾失控、人也變笨。今晚提早 30 分鐘上床!','熬夜等於預支明天的精神,利息很高。今晚提早 30 分鐘睡。','睡不飽,連甜食都抗拒不了。今晚早點熄燈!']);
+  else T('作息','ok',`平均睡 ${slAvg.toFixed(1)} 小時`,['睡眠夠了,這點超棒!','睡得飽,元氣滿滿!保持!','好好睡就是好福氣,繼續保持!']);
   const badSl=diet.filter(r=>r['睡眠品質']==='差').length;
-  if(badSl>=3)T('作息','warn',`${badSl} 天睡得差`,'睡不好,白天一定累。睡前 1 小時關螢幕,房間暗、涼、安靜。');
+  if(badSl>=3)T('作息','warn',`${badSl} 天睡得差`,['睡不好,白天一定累。睡前 1 小時關螢幕,房間暗、涼、安靜。','睡不好的夜晚太多了。試試睡前洗熱水澡、關螢幕,把房間弄成山洞。','一個個難眠的夜晚,累積成白天的殭屍。今晚睡前 1 小時放下手機。']);
   const exRows=diet.filter(r=>num(r['運動分鐘'])!==null);
   const exTot=diet.reduce((a,r)=>a+(num(r['運動分鐘'])||0),0);
   const exWk=Math.round(exTot/days*7),exTarget=child?420:150;
   S.tiles.push(['每週運動',exRows.length?exWk+' 分鐘':'無紀錄','目標 '+exTarget+' 分鐘']);
-  if(!exRows.length)T('運動','info','還沒有運動紀錄','到「飲食作息」記運動項目和分鐘數,建議會更準。',L(child?'kid':'walk'));
-  else if(exWk<exTarget*.5)T('運動','warn',`每週只動 ${exWk} 分鐘(目標 ${exTarget})`,child?'小孩一天要動 60 分鐘!身體在生鏽,今天就出門跑跳、跳繩、打球。':'一週動不到半小時,身體在生鏽!今天就出門快走 20 分鐘。',L(child?'rope':'walk','aero'));
-  else if(exWk<exTarget)T('運動','info',`每週運動 ${exWk} 分鐘`,'再多動一點就達標了,加油!',L(child?'rope':'walk'));
-  else T('運動','ok',`每週運動 ${exWk} 分鐘`,'運動量達標,太強了!');
+  if(!exRows.length)T('運動','info','還沒有運動紀錄',['到「飲食作息」記運動項目和分鐘數,建議會更準。','動了就記一筆,還沒動的話,先去動一下再回來記!','運動紀錄還是空白的,今天先留下第一筆吧!'],L(child?'kid':'walk'));
+  else if(exWk<exTarget*.5)T('運動','warn',`每週只動 ${exWk} 分鐘(目標 ${exTarget})`,child?['小孩一天要動 60 分鐘!身體在生鏽,今天就出門跑跳、跳繩、打球。','電量要動才會充滿!放學後去公園跑一圈,跳繩 200 下。','小朋友的骨頭和肌肉要靠跑跳長大,今天出門玩 1 小時!']:['一週動不到半小時,身體在生鏽!今天就出門快走 20 分鐘。','沙發快要長在你身上了!吃完飯出門走 20 分鐘。','一週動這麼少,肌肉在偷偷離職。今天先快走 20 分鐘。'],L(child?'rope':'walk','aero'));
+  else if(exWk<exTarget)T('運動','info',`每週運動 ${exWk} 分鐘`,['再多動一點就達標了,加油!','快到終點了!再多 1-2 次就達標!','離目標只差一點點,衝一下!'],L(child?'rope':'walk'));
+  else T('運動','ok',`每週運動 ${exWk} 分鐘`,['運動量達標,太強了!','運動達人就是你!繼續保持!','身體說謝謝!這個運動量很棒。']);
   const steps=avgOf(diet.map(r=>num(r['步數'])).filter(x=>x!==null&&x>0));
-  if(steps!==null&&!child&&steps<5000)T('運動','warn',`平均每天 ${Math.round(steps)} 步`,'屁股長在椅子上了!每小時起來走 3 分鐘,目標一天 7000 步。',L('walk'));
+  if(steps!==null&&!child&&steps<5000)T('運動','warn',`平均每天 ${Math.round(steps)} 步`,['屁股長在椅子上了!每小時起來走 3 分鐘,目標一天 7000 步。','走路是最便宜的藥!每小時起身走 3 分鐘。','步數太少,膝蓋都生鏽了。電梯改走樓梯,目標 7000 步。'],L('walk'));
   const scr=avgOf(diet.map(r=>num(r['螢幕時間'])).filter(x=>x!==null));
-  if(scr!==null&&scr>(child?2:6))T('作息','warn',`平均每天螢幕 ${scr.toFixed(1)} 小時`,'螢幕看太久,眼睛、睡眠、脖子一起壞。每 30 分鐘看遠方 20 秒,睡前 1 小時關機。',L('eye'));
+  if(scr!==null&&scr>(child?2:6))T('作息','warn',`平均每天螢幕 ${scr.toFixed(1)} 小時`,['螢幕看太久,眼睛、睡眠、脖子一起壞。每 30 分鐘看遠方 20 秒,睡前 1 小時關機。','眼睛不是用不壞的!每 30 分鐘看遠方 20 秒,睡前 1 小時關機。','螢幕吃掉你的睡眠和視力。今晚提早 1 小時放下手機!'],L('eye'));
   /* --- 身體數值 --- */
   const ht=lastV('身高');let bmi=lastV('BMI');if(bmi===null&&ht&&wt)bmi=wt/Math.pow(ht/100,2);
   const sy=lastV('收縮壓'),di=lastV('舒張壓'),pu=lastV('脈搏'),wa=lastV('腰圍'),bf=lastV('體脂率'),tp=lastV('體溫');
@@ -929,22 +979,22 @@ function analyze(name,days){
   S.tiles.push(['血壓',sy&&di?sy+'/'+di:'無紀錄',pu?'脈搏 '+pu:'']);
   if(dW!==null)S.tiles.push(['30 天體重',(dW>0?'+':'')+dW.toFixed(1)+' kg','']);
   if(bmi!==null&&!child){
-    if(bmi>=24)T('運動','warn',`BMI ${bmi.toFixed(1)}(${bmi>=27?'肥胖':'過重'})`,'再胖下去,膝蓋、血管、血糖輪流抗議。每天快走 30 分鐘,今天就出門!',L('walk','aero'));
-    else if(bmi<18.5)T('飲食','warn',`BMI ${bmi.toFixed(1)}(偏瘦)`,'太瘦沒本錢生病。每餐多一份蛋白質,再加一頓點心,順便練肌肉。',L('str'));
+    if(bmi>=24)T('運動','warn',`BMI ${bmi.toFixed(1)}(${bmi>=27?'肥胖':'過重'})`,['再胖下去,膝蓋、血管、血糖輪流抗議。每天快走 30 分鐘,今天就出門!','體重往上,膝蓋和血管都在喊救命。今天先走 30 分鐘。','不用瘋狂減肥,先從少喝一杯含糖飲料、多走 30 分鐘開始。'],L('walk','aero'));
+    else if(bmi<18.5)T('飲食','warn',`BMI ${bmi.toFixed(1)}(偏瘦)`,['太瘦沒本錢生病。每餐多一份蛋白質,再加一頓點心,順便練肌肉。','身體需要本錢!每餐多一塊肉或蛋,下午加一份點心。','想增重要吃對:蛋白質、堅果、酪梨,再練點肌肉。'],L('str'));
   }
-  if(child&&bmi!==null)T('運動','info',`BMI ${bmi.toFixed(1)}`,'小孩的 BMI 會隨年齡變,請用健康手冊的成長曲線看長期趨勢,別只看單次數字。');
+  if(child&&bmi!==null)T('運動','info',`BMI ${bmi.toFixed(1)}`,['小孩的 BMI 會隨年齡變,請用健康手冊的成長曲線看長期趨勢,別只看單次數字。','孩子還在長大,BMI 要看曲線不看單點,拿健康手冊出來對一下。']);
   if(child&&ht&&sex&&age>=4){const a=Math.min(18,Math.floor(age)),th=H3[sex][a];
-    if(th&&ht<th)T('運動','warn',`身高 ${ht} cm,在同齡偏矮的範圍`,'個子偏矮,快去跑跳!跳繩、打籃球最有用,10 點前上床(長高在睡覺),牛奶蛋肉別少。擔心就請教小兒科。',L('rope','grow'));}
+    if(th&&ht<th)T('運動','warn',`身高 ${ht} cm,在同齡偏矮的範圍`,['個子偏矮,快去跑跳!跳繩、打籃球最有用,10 點前上床(長高在睡覺),牛奶蛋肉別少。擔心就請教小兒科。','想長高:跳繩、打籃球、10 點前睡、牛奶蛋肉吃夠。擔心就問小兒科。','長高靠三件事:動、睡、吃!今天先去跳繩 200 下。'],L('rope','grow'));}
   if(dW!==null&&!child&&Math.abs(dW)>=3)T('飲食',dW>0?'warn':'info',`30 天${dW>0?'胖':'瘦'}了 ${Math.abs(dW).toFixed(1)} kg`,dW>0?'一個月胖這麼多,先檢查宵夜和手搖飲!':'不是刻意減重的話要小心,持續掉就去看醫生。');
   if(sy&&di&&!child){
-    if(sy>=140||di>=90)T('飲食','warn',`血壓 ${sy}/${di},高血壓範圍`,'血壓爆表,血管在偷偷受傷。少鹽少湯、天天量血壓,別拖,去給醫生看!');
-    else if(sy>=130||di>=80)T('飲食','warn',`血壓 ${sy}/${di},偏高`,'現在不管,以後吃藥一輩子。少鹽、多走路、天天量。',L('walk'));
+    if(sy>=140||di>=90)T('飲食','warn',`血壓 ${sy}/${di},高血壓範圍`,['血壓爆表,血管在偷偷受傷。少鹽少湯、天天量血壓,別拖,去給醫生看!','血管像被壓力撐著的水管,再拖會出事。少鹽少湯,趕快掛號。','血壓超標不是小事!今天就預約門診,順便少喝湯。']);
+    else if(sy>=130||di>=80)T('飲食','warn',`血壓 ${sy}/${di},偏高`,['現在不管,以後吃藥一輩子。少鹽、多走路、天天量。','血壓亮黃燈,現在調整還來得及。少鹽、走路、天天量。','少一點鹽,多一點走路,血壓就會乖。'],L('walk'));
     else if(sy<90||di<60)T('作息','info',`血壓 ${sy}/${di},偏低`,'站起來慢一點、多喝水,常頭暈就去看醫生。');
   }
   if(pu&&!child&&(pu>100||pu<50))T('作息','info',`脈搏 ${pu}`,'先靜坐 5 分鐘再量一次。胸悶、頭暈就去看醫生。');
-  if(wa&&!child&&sex&&((sex==='男'&&wa>=90)||(sex==='女'&&wa>=80)))T('運動','warn',`腰圍 ${wa} cm`,'肚子是內臟脂肪,專門傷心血管。少喝甜的、少宵夜、多走路、練核心。',L('core','walk'));
-  if(bf&&!child&&sex&&((sex==='男'&&bf>25)||(sex==='女'&&bf>32)))T('運動','warn',`體脂率 ${bf}%`,'體脂偏高。肌力訓練比節食有用,一週練兩次。',L('str'));
-  if(tp&&tp>=37.5)T('作息','info',`最近體溫 ${tp}°C`,'有點燒。多休息、多喝水,超過 3 天或到 39 度就去看醫生。');
+  if(wa&&!child&&sex&&((sex==='男'&&wa>=90)||(sex==='女'&&wa>=80)))T('運動','warn',`腰圍 ${wa} cm`,['肚子是內臟脂肪,專門傷心血管。少喝甜的、少宵夜、多走路、練核心。','腰圍是健康的紅綠燈。戒甜飲、戒宵夜,每天走 30 分鐘。','小腹的脂肪藏在器官旁邊,最危險。今天開始練核心。'],L('core','walk'));
+  if(bf&&!child&&sex&&((sex==='男'&&bf>25)||(sex==='女'&&bf>32)))T('運動','warn',`體脂率 ${bf}%`,['體脂偏高。肌力訓練比節食有用,一週練兩次。','想降體脂,餓肚子不如練肌肉。一週兩次就好。','肌肉是燃脂工廠,一週去上班兩次。'],L('str'));
+  if(tp&&tp>=37.5)T('作息','info',`最近體溫 ${tp}°C`,['有點燒。多休息、多喝水,超過 3 天或到 39 度就去看醫生。','體溫有點高。好好休息、多喝水,超過 3 天或到 39 度就去看醫生。']);
   /* --- 症狀 --- */
   const sc={};
   sym.forEach(r=>{const seen=new Set();String(r['症狀']||'').split('、').filter(Boolean).forEach(e=>{const n=parseSym(e)[0];if(!seen.has(n)){seen.add(n);(sc[n]=sc[n]||new Set()).add(r['日期'])}});});
@@ -957,25 +1007,25 @@ function analyze(name,days){
     T(G.g,tot.size>=5?'warn':'info',`${G.n}:${hit.map(h=>h[0]+' '+h[1]+' 天').join('、')}`,G.tip,G.l);
   });
   const gutDays=new Set();S.sym.filter(x=>/便秘|腹瀉|腹脹|胃痛|脹氣/.test(x[0])).forEach(x=>sc[x[0]].forEach(d=>gutDays.add(d)));
-  if(gutDays.size>=2&&(fried>=3||drink>=3))T('飲食','warn','肚子不舒服,又吃炸物、喝含糖飲料','兩件事八成有關!連續 2 週戒炸物和手搖飲,看看肚子有沒有變好。');
+  if(gutDays.size>=2&&(fried>=3||drink>=3))T('飲食','warn','肚子不舒服,又吃炸物、喝含糖飲料',['兩件事八成有關!連續 2 週戒炸物和手搖飲,看看肚子有沒有變好。','肚子痛和炸物、手搖飲八成是一夥的,先戒 2 週看看。','試試 2 週不炸不甜,看肚子有沒有跟你說謝謝。']);
   /* --- 健檢 --- */
   const cks=mine('健檢紀錄').sort((a,b)=>(b['健檢日期']||'').localeCompare(a['健檢日期']||''));
   if(cks[0]){
-    const bad=String(cks[0]['異常項目']||'').split('、').filter(Boolean);
+    const bs=new Set(String(cks[0]['異常項目']||'').split('、').filter(Boolean));CKITEMS.forEach(i=>{if(outOf(i.k,cks[0][i.k],sex))bs.add(i.k)});const bad=[...bs];
     S.ck={date:cks[0]['健檢日期'],bad};
     bad.forEach(b=>{const m=CKTIP.find(x=>x[0].test(b));T(m?m[1]:'作息','warn',`${cks[0]['健檢日期']} 健檢異常:${b}`,m?m[2]:'這項亮紅燈,拿報告請教醫師,按時複檢。',m?m[3]:[])});
   }
-  if(child)T('運動','info','小孩運動基本目標','每天動 60 分鐘,跑跳比補品有用。螢幕每天 1-2 小時內。',L('kid','rope'));
-  else T('運動','info','大人運動基本目標','每週 150 分鐘有氧加 2 次肌力,每坐 45 分鐘起來動一動。',L('walk','str'));
+  if(child)T('運動','info','小孩運動基本目標',['每天動 60 分鐘,跑跳比補品有用。螢幕每天 1-2 小時內。','小孩的補品就是陽光和跑跳。每天 60 分鐘!','玩到流汗最好。每天 60 分鐘,螢幕不超過 2 小時。'],L('kid','rope'));
+  else T('運動','info','大人運動基本目標',['每週 150 分鐘有氧加 2 次肌力,每坐 45 分鐘起來動一動。','一週 150 分鐘有氧加 2 次肌力,坐久了就起來晃一晃。','動動身體,比任何保健品都有用。每週 150 分鐘!'],L('walk','str'));
   return S;
 }
 /* ============ 月經大補帖:算週期、下次月經、今天是哪一期 ============ */
 const PH=[
- {n:'月經期',c:'#ff6b81',body:'子宮在排出內膜,常有下腹悶痛、腰痠、疲倦、情緒低落,經血通常先多後少。',eat:'喝溫熱的,多吃紅肉、深綠色蔬菜補鐵;冰飲、咖啡、炸物先放過自己,不然更痛。',ex:'散步、瑜伽、伸展就好,別硬幹。',rest:'早點睡,肚子和腰熱敷,今天允許自己偷懶。',lk:['stretch']},
- {n:'濾泡期(經後)',c:'#7bd88f',body:'雌激素往上衝,精神變好、皮膚變好、體力回來了,是一個月裡最輕盈的時候。',eat:'蛋白質加蔬果加全穀,把經期流失的補回來。',ex:'最適合練肌力和有氧,衝!',rest:'專注力好,重要的事排這幾天做。',lk:['str','aero']},
- {n:'排卵期',c:'#ffd166',body:'白帶變多、透明像蛋清,體溫微升,有人一側小腹輕微悶痛、情緒比較high。這幾天最容易懷孕。',eat:'多喝水、多蔬果,甜食別失控。',ex:'照常運動就好。',rest:'要避孕或備孕,就看這幾天!下腹劇痛要看醫生。',lk:['walk']},
- {n:'黃體期',c:'#4cc3ff',body:'黃體素上升,體溫偏高、食慾變大、特別想吃甜的、有點懶。',eat:'少糖少鹽,多吃地瓜、南瓜、堅果、香蕉(有鎂,穩定情緒)。',ex:'中等強度的有氧或瑜伽,出汗就好。',rest:'睡飽一點,越睡不夠越想吃甜。',lk:['aero','stretch']},
- {n:'經前期',c:'#b78cff',body:'經前症候群登場:肚子脹、胸部脹痛、長痘、水腫、失眠、脾氣像火山。',eat:'鹽減量、少喝咖啡和酒、多喝水,甜食適可而止。',ex:'散步、伸展、輕鬆瑜伽,別拚。',rest:'提早睡。情緒來了先深呼吸,別在這幾天吵架!',lk:['stretch']}
+ {n:'月經期',c:'#ff6b81',body:'子宮在排出內膜,常有下腹悶痛、腰痠、疲倦、情緒低落,經血通常先多後少。',eat:['喝溫熱的,多吃紅肉、深綠色蔬菜補鐵;冰飲、咖啡、炸物先放過自己,不然更痛。','薑茶、紅棗湯、溫熱的湯最舒服,冰的先別碰。'],ex:'散步、瑜伽、伸展就好,別硬幹。',rest:['早點睡,肚子和腰熱敷,今天允許自己偷懶。','今天是你的特權日,什麼都可以慢慢來。','抱著熱水袋追劇也算養生。'],lk:['stretch']},
+ {n:'濾泡期(經後)',c:'#7bd88f',body:'雌激素往上衝,精神變好、皮膚變好、體力回來了,是一個月裡最輕盈的時候。',eat:['蛋白質加蔬果加全穀,把經期流失的補回來。','多吃蛋、魚、豆腐和深綠色蔬菜,把鐵質補回來。'],ex:'最適合練肌力和有氧,衝!',rest:['專注力好,重要的事排這幾天做。','腦袋最清楚的時候,學新東西、做決定都很適合。','心情最輕盈,約朋友出門吧!'],lk:['str','aero']},
+ {n:'排卵期',c:'#ffd166',body:'白帶變多、透明像蛋清,體溫微升,有人一側小腹輕微悶痛、情緒比較high。這幾天最容易懷孕。',eat:['多喝水、多蔬果,甜食別失控。','今天吃得清爽一點,多喝水。'],ex:'照常運動就好。',rest:['要避孕或備孕,就看這幾天!下腹劇痛要看醫生。','情緒和精神都在高點,今天容易表現很好。','一側小腹有點悶痛很常見,痛到受不了就看醫生。'],lk:['walk']},
+ {n:'黃體期',c:'#4cc3ff',body:'黃體素上升,體溫偏高、食慾變大、特別想吃甜的、有點懶。',eat:['少糖少鹽,多吃地瓜、南瓜、堅果、香蕉(有鎂,穩定情緒)。','想吃甜的時候,先吃水果或一小把堅果。'],ex:'中等強度的有氧或瑜伽,出汗就好。',rest:['睡飽一點,越睡不夠越想吃甜。','想懶就懶一下,但還是要動。','容易累很正常,別硬撐,早點睡。'],lk:['aero','stretch']},
+ {n:'經前期',c:'#b78cff',body:'經前症候群登場:肚子脹、胸部脹痛、長痘、水腫、失眠、脾氣像火山。',eat:['鹽減量、少喝咖啡和酒、多喝水,甜食適可而止。','水腫又想吃重口味?今天清淡一點,多喝水。'],ex:'散步、伸展、輕鬆瑜伽,別拚。',rest:['提早睡。情緒來了先深呼吸,別在這幾天吵架!','脾氣像火山時,先去洗個澡、聽首歌再說話。','告訴家人你快來了,請大家多包涵!'],lk:['stretch']}
 ];
 const DT=s=>new Date(s+'T00:00:00');
 const dfd=(a,b)=>Math.round((DT(b)-DT(a))/864e5);
@@ -1019,8 +1069,8 @@ function periodHTML(name,S){
     h+=`<div style="padding:9px 0;border-top:1px solid var(--line)"><span class="tag" style="color:#ffb347;background:color-mix(in srgb,#ffb347 15%,transparent)">要注意</span><div style="margin:6px 0 2px;font-weight:700">已經比預計晚 ${late} 天</div><div>${late>14?'紀錄可能漏了,先補記最近一次月經的「開始」。':'壓力、熬夜、體重變動、劇烈運動都會讓月經遲到。超過 7 天且有可能懷孕就先驗孕,連續 3 個月不規律請看婦科。'}</div></div>`;
   }else{
     const row=(t,x)=>`<div style="padding:7px 0;border-top:1px solid var(--line)"><i style="font-style:normal;color:${ph.c};font-weight:700">${t}</i><div>${esc(x)}</div></div>`;
-    h+=`<div style="font-weight:700;margin-bottom:4px;color:${ph.c}">今天是${ph.n},身體可能會這樣</div><div>${esc(ph.body)}</div>`
-      +row('吃',ph.eat)+row('動',ph.ex)+row('睡與心情',ph.rest)
+    h+=`<div style="font-weight:700;margin-bottom:4px;color:${ph.c}">今天是${ph.n},身體可能會這樣</div><div>${esc(pick(ph.body))}</div>`
+      +row('吃',pick(ph.eat))+row('動',pick(ph.ex))+row('睡與心情',pick(ph.rest))
       +`<div class="chips" style="margin-top:7px">${ph.lk.map(k=>`<a class="chip sm" href="${YT(LK[k][1])}" target="_blank" rel="noopener" style="text-decoration:none">${ic('vitals',null,16)}看示範:${esc(LK[k][0])}</a>`).join('')}</div>`;
   }
   if(I.gaps.length>=2&&Math.max(...I.gaps)-Math.min(...I.gaps)>=8)h+=`<div style="padding:9px 0;border-top:1px solid var(--line);margin-top:8px"><span class="tag" style="color:#ffb347;background:color-mix(in srgb,#ffb347 15%,transparent)">要注意</span><div style="margin:6px 0 2px;font-weight:700">週期忽長忽短(${Math.min(...I.gaps)}~${Math.max(...I.gaps)} 天)</div><div>可能是壓力、睡眠、體重或荷爾蒙影響。連續 3 個月都這樣,請找婦科聊聊。</div></div>`;
