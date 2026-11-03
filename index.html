@@ -104,6 +104,8 @@ details.grp[open]>summary{border-bottom:1px solid var(--line);background:var(--p
 .it .sd{color:var(--mut);font-weight:400;margin-left:4px}
 .ckl{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:1px 10px;padding:7px 0;border-top:1px solid var(--line)}
 .ckl .n{display:inline-flex;align-items:center;gap:5px}.ckl .v{font-weight:700;color:var(--pri)}.ckl .rf{flex-basis:100%;color:var(--mut)}
+.ckl.tx{flex-direction:column;align-items:stretch;gap:3px}.ckl.tx .v{font-weight:400;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.ckl.tx.bad .v{color:#ff6b6b}
+.tbl td.tt{white-space:pre-line;min-width:150px;max-width:260px;overflow-wrap:anywhere;vertical-align:top}
 .ckl.bad{background:rgba(255,107,107,.1);margin:0 -8px;padding:7px 8px;border-radius:8px}.ckl.bad .n,.ckl.bad .v{color:#ff6b6b}
 .ckbad{margin:8px 0;border:1px solid rgba(255,107,107,.45);border-radius:10px;padding:2px 10px}.ckbad .ckl:first-child{border-top:0}
 .ckg{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:2px 10px}
@@ -385,10 +387,12 @@ const refText=(k,sex)=>{const d=refOf(k,sex);if(!d)return '';return d[0]!=null&&
 const outOf=(k,v,sex)=>{const n=parseFloat(v),d=refOf(k,sex);if(isNaN(n)||!d)return false;return (d[0]!=null&&n<d[0])||(d[1]!=null&&n>d[1])};
 const ckBad=(r,k,sex)=>String(r['異常項目']||'').split('、').includes(k)||outOf(k,r[k],sex);
 function ckReport(r,sex){
-  const groups=CK.map(g=>({name:g[0],icon:g[1],items:g[2].filter(i=>r[i[0]]!==undefined&&r[i[0]]!=='').map(i=>({k:i[0],u:i[1],v:r[i[0]],bad:ckBad(r,i[0],sex),ref:refText(i[0],sex)}))}));
+  const groups=CK.map(g=>({name:g[0],icon:g[1],items:g[2].filter(i=>r[i[0]]!==undefined&&r[i[0]]!=='').map(i=>({k:i[0],u:i[1],t:i[2]==='t',v:r[i[0]],bad:ckBad(r,i[0],sex),ref:refText(i[0],sex)}))}));
   return {groups,flat:groups.flatMap(g=>g.items)};
 }
-const ckLine=x=>`<div class="ckl ${x.bad?'bad':''}"><span class="n">${x.bad?ic('warn','#ff6b6b',16):''}${esc(x.k)}</span><span class="v">${esc(x.v)}${x.u?' <small>'+esc(x.u)+'</small>':''}</span>${x.ref?`<span class="rf">標準 ${esc(x.ref)}</span>`:''}</div>`;
+/* 長段文字自動分行:句號、分號後換行,1. 2. 3. 編號前換行 */
+const fmtMulti=v=>String(v).replace(/([。；;])[ \t]*(?=\S)/g,'$1\n').replace(/[ \t]+(?=\(?\d{1,2}[.、．)]\s*\S)/g,'\n').replace(/\n{2,}/g,'\n').trim();
+const ckLine=x=>`<div class="ckl ${x.bad?'bad':''} ${x.t?'tx':''}"><span class="n">${x.bad?ic('warn','#ff6b6b',16):''}${esc(x.k)}</span><span class="v">${esc(x.t?fmtMulti(x.v):x.v)}${x.u?' <small>'+esc(x.u)+'</small>':''}</span>${x.ref?`<span class="rf">標準 ${esc(x.ref)}</span>`:''}</div>`;
 
 const dkOf=s=>s.nodate?null:(s.date||'日期');
 const fieldKeys=s=>(s.fields||[]).flatMap(f=>f.g?[]:f.t==='part'?['症狀部位大項','症狀部位細項']:[f.k]);
@@ -803,14 +807,14 @@ function openCheckup(row,mode){
     h+=`<details class="grp" data-g="${gi}" ${n?'open':''}><summary>${ic(g[1],null,22)}<span style="color:${ICOL[g[1]]}">${g[0]}</span><span class="cnt">已填 <span class="gn">${n}</span>/${g[2].length}</span></summary><div class="items">`;
     g[2].forEach(i=>{
       const bad=flags.has(i[0]);
-      h+=`<div class="it ${bad?'bad':''}" data-k="${esc(i[0])}"><label>${esc(i[0])}${i[1]?` <small style="color:var(--pri)">${i[1]}</small>`:''}<span class="wi">${ic('warn','#ff6b6b',16)}</span><small class="sd"></small></label><div class="row"><input type="${i[2]==='t'?'text':'number'}" ${i[2]==='t'?'':'step="any" inputmode="decimal"'} name="${esc(i[0])}" value="${esc(v(i[0]))}" ${i[0]==='BMI'?'readonly':''}><button type="button" class="flag ${bad?'on':''}" title="標記異常">異常</button></div></div>`;
+      h+=`<div class="it ${bad?'bad':''}" data-k="${esc(i[0])}"><label>${esc(i[0])}${i[1]?` <small style="color:var(--pri)">${i[1]}</small>`:''}<span class="wi">${ic('warn','#ff6b6b',16)}</span><small class="sd"></small></label><div class="row">${i[2]==='t'?`<textarea name="${esc(i[0])}" rows="3">${esc(v(i[0]))}</textarea>`:`<input type="number" step="any" inputmode="decimal" name="${esc(i[0])}" value="${esc(v(i[0]))}" ${i[0]==='BMI'?'readonly':''}>`}<button type="button" class="flag ${bad?'on':''}" title="標記異常">異常</button></div></div>`;
     });
     h+='</div></details>';
   });
   h+='</form>';
   openModal((mode==='edit'?'修改':mode==='copy'?'複製':'新增')+'健康檢查',h,'<button class="btn sec" data-act="close">取消</button><button class="btn" id="saveBtn">儲存</button>');
   const F=$('#F');
-  const recount=()=>F.querySelectorAll('details.grp').forEach(d=>{d.querySelector('.gn').textContent=[...d.querySelectorAll('input')].filter(x=>x.value!=='').length});
+  const recount=()=>F.querySelectorAll('details.grp').forEach(d=>{d.querySelector('.gn').textContent=[...d.querySelectorAll('input,textarea')].filter(x=>x.value!=='').length});
   const setBad=(it,on)=>{const k=it.dataset.k;on?flags.add(k):flags.delete(k);it.classList.toggle('bad',on);it.querySelector('.flag').classList.toggle('on',on)};
   const autoOne=(it,sex)=>{const k=it.dataset.k,inp=it.querySelector('input'),sd=it.querySelector('.sd'),rt=refText(k,sex);sd.textContent=rt?'標準 '+rt:'';if(refOf(k,sex))setBad(it,outOf(k,inp.value,sex))};
   const autoAll=()=>{const sex=sexOf(F.elements['姓名'].value);F.querySelectorAll('.it').forEach(it=>autoOne(it,sex))};
@@ -859,7 +863,7 @@ function drawCompare(){
       if(!rows.length)return;
       h+=`<tr class="gr"><td colspan="${recs.length+2}" style="color:${ICOL[g[1]]}">${ic(g[1],null,18)} ${g[0]}</td></tr>`;
       rows.forEach(i=>{
-        h+=`<tr><td class="ck" data-act="ckitem" data-k="${esc(i[0])}">${esc(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(x)}</td>`}).join('')+'</tr>';
+        h+=`<tr><td class="ck" data-act="ckitem" data-k="${esc(i[0])}">${esc(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''} ${i[2]==='t'?'tt':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(i[2]==='t'?fmtMulti(x):x)}</td>`}).join('')+'</tr>';
       });
     });
     h+='</table></div>';
