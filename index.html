@@ -50,6 +50,9 @@ input[readonly]{background:#101012;color:var(--mut)}
 .tag.part{font-weight:700}
 .tag.sv{background:transparent;border:1px solid;font-weight:700}
 .kvs{display:flex;flex-wrap:wrap;gap:6px 16px}
+.en{color:var(--mut);font-weight:400;margin-left:6px}
+.blk>i .en,.tbl td.ck .en,.ckg .en{display:block;margin-left:0}
+.ckl .n .en{display:block;margin-left:0}
 .blks{margin-top:6px}
 .blk{display:grid;grid-template-columns:5.6em minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px solid var(--line)}
 .blk:first-child{border-top:0}
@@ -169,6 +172,8 @@ let toastT;const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('
 /* ============ 圖示(SVG,不會亂碼)與顏色 ============ */
 const ICON={
 warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r=".9" fill="currentColor"/>',
+vessel:'<path d="M3 8c3-3 5 3 9 0s6 3 9 0"/><path d="M3 16c3-3 5 3 9 0s6 3 9 0"/>',
+shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
 gender:'<circle cx="9" cy="15" r="4"/><path d="M12 12l6-6M14 6h4v4"/><path d="M18 14v5M15.5 16.5h5"/>',
 plan:'<path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.7 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/>',
 leaf:'<path d="M5 19C5 9 10 5 20 5c0 9-4 14-12 14"/><path d="M5 19c3-5 6-8 10-10"/>',
@@ -198,7 +203,7 @@ flask:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/>',
 female:'<circle cx="12" cy="9" r="5"/><path d="M12 14v8M9 18h6"/>',
 virus:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/>'
 };
-const ICOL={gender:'#f78fb3',warn:'#ff6b6b',plan:'#e6c15a',leaf:'#d4b483',home:'#d4b483',vitals:'#ff6b81',diet:'#9be564',meds:'#4cc3ff',symptoms:'#ffb347',visits:'#5eead4',checkup:'#b78cff',settings:'#c9c9c9',
+const ICOL={vessel:'#ff8a5c',shield:'#7bd88f',gender:'#f78fb3',warn:'#ff6b6b',plan:'#e6c15a',leaf:'#d4b483',home:'#d4b483',vitals:'#ff6b81',diet:'#9be564',meds:'#4cc3ff',symptoms:'#ffb347',visits:'#5eead4',checkup:'#b78cff',settings:'#c9c9c9',
 brain:'#b78cff',eye:'#4cc3ff',ent:'#ffb347',lungs:'#5eead4',heart:'#ff6b81',stomach:'#ffd166',liver:'#d9955f',kidney:'#5b9dff',bone:'#d6c7a1',limb:'#9be564',skin:'#ff9e7a',body:'#e8e2d6',other:'#9aa0a6',drop:'#ff4d6d',flask:'#f4a259',female:'#ff8fb8',virus:'#c084fc'};
 const ic=(k,c,sz)=>`<svg class="ic" viewBox="0 0 24 24" style="color:${c||ICOL[k]||'currentColor'}${sz?`;width:${sz}px;height:${sz}px`:''}">${ICON[k]||''}</svg>`;
 $('#logo').innerHTML=ic('leaf','#d4b483',24)+'養序';
@@ -319,6 +324,7 @@ function buildOptions(rows){
   return {P,SP,BY};
 }
 function applyOptions(){
+  refreshCK();
   ['身體狀況','用藥紀錄','就診紀錄'].forEach(sh=>(DB[sh]||[]).forEach(r=>{if(r['症狀部位大項'])r['症狀部位大項']=normPart(r['症狀部位大項'])}));
   let o=buildOptions((DB['選項']&&DB['選項'].length)?DB['選項']:defaultRows());
   if(!Object.keys(o.P).length)o=buildOptions(defaultRows());
@@ -361,24 +367,59 @@ symptoms:{sheet:'身體狀況',label:'身體狀況',i:'symptoms',hasPart:1,again
  {k:'部位',t:'part'},{k:'症狀',t:'chips'},{k:'其他說明',t:'text',full:1},{k:'備註',t:'area'}]},
 checkup:{sheet:'健檢紀錄',label:'健康檢查',i:'checkup',date:'健檢日期'}
 };
-const CK=[
+/* ============ 英文名稱(顯示在中文旁邊;試算表欄位仍用中文) ============ */
+const EN={
+'基本體格':'Body Measurements','腦神經 | 眼睛':'Neuro | Eyes','心血管':'Cardiovascular','周邊血管 | 動脈硬化':'Peripheral Vascular | Arterial Stiffness','血液':'Hematology','代謝 | 內分泌':'Metabolic | Endocrine','肺部':'Lungs','腸胃':'Gastrointestinal','肝膽':'Liver | Biliary','腎臟 | 泌尿':'Kidney | Urinary','骨骼':'Bones','生殖 | 婦科 | 乳房':'Reproductive | Gynecology | Breast','腫瘤指標 | 病毒':'Tumor Markers | Virus','免疫 | 過敏':'Immunology | Allergy','其他項目':'Others',
+'身高':'Height','體重':'Weight','BMI':'Body Mass Index','胸圍':'Chest Circumference','腰圍':'Waist Circumference','臀圍':'Hip Circumference','體脂率':'Body Fat %','體溫':'Body Temperature',
+'右眼視力':'Right Eye Vision','左眼視力':'Left Eye Vision',
+'收縮壓':'Systolic BP','舒張壓':'Diastolic BP','脈搏':'Pulse','心電圖':'ECG','平均心室率':'Average Ventricular Rate','膽固醇':'Total Cholesterol','三酸甘油脂':'Triglycerides','高密度脂蛋白':'HDL-C','低密度脂蛋白':'LDL-C',
+'周邊動脈硬化評估':'Peripheral Arterial Stiffness Assessment','右臂脈波傳導速度':'Right Brachial PWV','左臂脈波傳導速度':'Left Brachial PWV','右側踝臂血壓指數':'Right ABI','左側踝臂血壓指數':'Left ABI','右側周邊血管彈性':'Right Peripheral Vascular Elasticity','左側周邊血管彈性':'Left Peripheral Vascular Elasticity','右側周邊血管阻塞程度':'Right Peripheral Vascular Occlusion','左側周邊血管阻塞程度':'Left Peripheral Vascular Occlusion',
+'白血球':'WBC','紅血球':'RBC','血小板':'Platelets (PLT)','血紅素':'Hemoglobin (Hb)','血球容積比':'Hematocrit (Hct)','平均紅血球容積':'MCV','平均紅血球血色素濃度':'MCHC','平均紅血球血色素':'MCH','紅血球體積分布寬度':'RDW','中性球':'Neutrophils','嗜伊紅性球':'Eosinophils','鹼性球':'Basophils','淋巴球':'Lymphocytes','單核球':'Monocytes',
+'飯前血糖':'Fasting Glucose','醣化血色素':'HbA1c','促甲狀腺素TSH':'TSH',
+'胸部X光':'Chest X-ray','低劑量肺部斷層掃描LDC':'Low-dose CT (LDCT)',
+'腹部超音波':'Abdominal Ultrasound','上消化道攝影':'Upper GI Series','下消化道攝影':'Lower GI Series','糞便':'Stool',
+'總膽紅素':'Total Bilirubin','直接膽紅素':'Direct Bilirubin','總血清蛋白':'Total Protein','白蛋白':'Albumin','球蛋白':'Globulin','肝功能AST':'AST (GOT)','肝功能ALT':'ALT (GPT)','鹼性磷酸酶':'ALP','r-GT':'γ-GT (GGT)','B型肝炎表面抗原':'HBsAg','B型肝炎表面抗體':'Anti-HBs','C型肝炎抗體':'Anti-HCV',
+'尿素氮':'BUN','肌酸酐':'Creatinine','腎絲球過濾率':'eGFR','尿酸':'Uric Acid','尿液紅血球':'Urine RBC','尿液白血球':'Urine WBC','尿液表皮細胞':'Urine Epithelial Cells','尿液結晶體':'Urine Crystals','尿液圓柱體':'Urine Casts','尿蛋白':'Urine Protein','尿液細菌':'Urine Bacteria','酸鹼值':'Urine pH','比重':'Specific Gravity','尿膽紅素':'Urine Bilirubin','尿膽素原':'Urobilinogen','泌尿':'Urinary Tract',
+'骨質密度':'Bone Mineral Density',
+'骨盆':'Pelvis','攝護腺(前列腺)':'Prostate','膀胱':'Bladder','睪丸 | 陰囊':'Testis | Scrotum','子宮頸抹片':'Pap Smear','乳房X光':'Mammography','乳房攝影':'Breast Imaging',
+'甲型胎兒蛋白':'AFP','癌胚胎抗原':'CEA','前列腺特異抗原':'PSA','腫瘤指標CA-199':'CA 19-9','腫瘤指標CA-125':'CA 125','腫瘤指標CA-153':'CA 15-3','EB病毒VCA IgA抗體':'EBV VCA IgA',
+'全免疫球蛋白E定量':'Total IgE',
+'健檢日期':'Checkup Date','健檢醫院':'Hospital','方案費用':'Package Fee','異常項目':'Abnormal Items','備註':'Notes','姓名':'Name','日期':'Date','時間':'Time','性別':'Sex','生日':'Birthday',
+'身形':'Body','眼睛':'Eyes','生命徵象':'Vital Signs',
+'三餐':'Meals','早餐':'Breakfast','中餐':'Lunch','晚餐':'Dinner','其他飲食':'Other Intake','飲料':'Drinks','加工食品':'Processed Food','炸物':'Fried Food','宵夜':'Late-night Snack','蔬果份數':'Fruit & Veg Servings','飲水':'Water Intake','睡眠':'Sleep','睡覺時間':'Bedtime','起床時間':'Wake-up Time','睡眠時數':'Sleep Hours','睡眠品質':'Sleep Quality','運動與螢幕':'Exercise & Screen','運動項目':'Exercise','運動分鐘':'Exercise Minutes','步數':'Steps','螢幕時間':'Screen Time',
+'部位':'Body Part','藥品':'Medication','劑量':'Dose','醫院名稱':'Hospital','診斷與醫囑':'Diagnosis & Orders','其他說明':'Other Notes','症狀':'Symptoms'};
+const L2=k=>esc(k)+(EN[k]?`<span class="en">${esc(EN[k])}</span>`:'');
+
+const CK_BASE=[
 ['基本體格','body',[['身高','cm'],['體重','kg'],['BMI',''],['胸圍','cm'],['腰圍','cm'],['臀圍','cm']]],
 ['腦神經 | 眼睛','brain',[['右眼視力',''],['左眼視力','']]],
-['心血管','heart',[['收縮壓','mmHg'],['舒張壓','mmHg'],['脈搏','bpm'],['心電圖','','t'],['膽固醇','mg/dL'],['三酸甘油脂','mg/dL'],['高密度脂蛋白','mg/dL'],['低密度脂蛋白','mg/dL']]],
-['血液','drop',[['白血球','10³/µL'],['紅血球','10⁶/µL'],['血小板','10³/µL'],['血紅素','g/dL'],['血球容積比','%'],['平均紅血球容積','fL'],['平均紅血球血色素濃度','g/dL'],['平均紅血球血色素','pg'],['中性球','%'],['嗜伊紅性球','%'],['鹼性球','%'],['淋巴球','%'],['單核球','%']]],
+['心血管','heart',[['收縮壓','mmHg'],['舒張壓','mmHg'],['脈搏','bpm'],['心電圖','','t'],['平均心室率','bpm'],['膽固醇','mg/dL'],['三酸甘油脂','mg/dL'],['高密度脂蛋白','mg/dL'],['低密度脂蛋白','mg/dL']]],
+['周邊血管 | 動脈硬化','vessel',[['周邊動脈硬化評估','','t'],['右臂脈波傳導速度','cm/s'],['左臂脈波傳導速度','cm/s'],['右側踝臂血壓指數',''],['左側踝臂血壓指數',''],['右側周邊血管彈性','','t'],['左側周邊血管彈性','','t'],['右側周邊血管阻塞程度','','t'],['左側周邊血管阻塞程度','','t']]],
+['血液','drop',[['白血球','10³/µL'],['紅血球','10⁶/µL'],['血小板','10³/µL'],['血紅素','g/dL'],['血球容積比','%'],['平均紅血球容積','fL'],['平均紅血球血色素濃度','g/dL'],['平均紅血球血色素','pg'],['紅血球體積分布寬度','%'],['中性球','%'],['嗜伊紅性球','%'],['鹼性球','%'],['淋巴球','%'],['單核球','%']]],
 ['代謝 | 內分泌','flask',[['飯前血糖','mg/dL'],['醣化血色素','%'],['促甲狀腺素TSH','µIU/mL']]],
 ['肺部','lungs',[['胸部X光','','t'],['低劑量肺部斷層掃描LDC','','t']]],
-['腸胃','stomach',[['腹部超音波','','t'],['上消化道攝影','','t'],['下消化道攝影','','t']]],
+['腸胃','stomach',[['腹部超音波','','t'],['上消化道攝影','','t'],['下消化道攝影','','t'],['糞便','','t']]],
 ['肝膽','liver',[['總膽紅素','mg/dL'],['直接膽紅素','mg/dL'],['總血清蛋白','g/dL'],['白蛋白','g/dL'],['球蛋白','g/dL'],['肝功能AST','U/L'],['肝功能ALT','U/L'],['鹼性磷酸酶','U/L'],['r-GT','U/L'],['B型肝炎表面抗原','','t'],['B型肝炎表面抗體','','t'],['C型肝炎抗體','','t']]],
 ['腎臟 | 泌尿','kidney',[['尿素氮','mg/dL'],['肌酸酐','mg/dL'],['腎絲球過濾率','mL/min'],['尿酸','mg/dL'],['尿液紅血球','','t'],['尿液白血球','','t'],['尿液表皮細胞','','t'],['尿液結晶體','','t'],['尿液圓柱體','','t'],['尿蛋白','','t'],['尿液細菌','','t'],['酸鹼值',''],['比重',''],['尿膽紅素','','t'],['尿膽素原','','t'],['泌尿','','t']]],
 ['骨骼','bone',[['骨質密度','','t']]],
 ['生殖 | 婦科 | 乳房','gender',[['骨盆','','t'],['攝護腺(前列腺)','','t'],['膀胱','','t'],['睪丸 | 陰囊','','t'],['子宮頸抹片','','t'],['乳房X光','','t'],['乳房攝影','','t']]],
-['腫瘤指標 | 病毒','virus',[['甲型胎兒蛋白','ng/mL'],['癌胚胎抗原','ng/mL'],['前列腺特異抗原','ng/mL'],['腫瘤指標CA-199','U/mL'],['腫瘤指標CA-125','U/mL'],['腫瘤指標CA-153','U/mL'],['EB病毒VCA IgA抗體','','t']]]
+['腫瘤指標 | 病毒','virus',[['甲型胎兒蛋白','ng/mL'],['癌胚胎抗原','ng/mL'],['前列腺特異抗原','ng/mL'],['腫瘤指標CA-199','U/mL'],['腫瘤指標CA-125','U/mL'],['腫瘤指標CA-153','U/mL'],['EB病毒VCA IgA抗體','','t']]],
+['免疫 | 過敏','shield',[['全免疫球蛋白E定量','IU/mL']]]
 ];
-const CKITEMS=CK.flatMap(g=>g[2].map(i=>({k:i[0],u:i[1],t:i[2]||'n',g:g[0]})));
+let CK=CK_BASE;
+let CKITEMS=CK.flatMap(g=>g[2].map(i=>({k:i[0],u:i[1],t:i[2]||'n',g:g[0]})));
+/* 你在試算表「健檢紀錄」分頁自己加的欄位,會自動出現在「其他項目」,不用改 APP */
+const CK_FIXED=['id','健檢日期','姓名','健檢醫院','方案費用','異常項目','備註'];
+function refreshCK(){
+  const known=new Set([...CK_FIXED,...CK_BASE.flatMap(g=>g[2].map(i=>i[0]))]),ex={};
+  (DB['健檢紀錄']||[]).forEach(r=>Object.keys(r).forEach(k=>{const kk=String(k).trim();if(!kk||known.has(kk)||/^__/.test(kk))return;const v=r[k];const o=ex[kk]=ex[kk]||{n:true,any:false};if(v!==''&&v!==undefined&&v!==null){o.any=true;if(typeof v!=='number'&&isNaN(parseFloat(v)))o.n=false;else if(typeof v!=='number')o.n=false}}));
+  const items=Object.keys(ex).map(k=>[k,'',ex[k].any&&ex[k].n?'':'t']);
+  CK=items.length?[...CK_BASE,['其他項目','other',items]]:CK_BASE;
+  CKITEMS=CK.flatMap(g=>g[2].map(i=>({k:i[0],u:i[1],t:i[2]||'n',g:g[0]})));
+}
 
 /* ============ 健檢標準值(一般成人參考,各院所略有不同,以報告上的標準為準) ============ */
-const REF={'BMI':[18.5,24],'腰圍':{男:[null,90],女:[null,80]},'收縮壓':[90,129],'舒張壓':[60,79],'脈搏':[60,100],
+const REF={'平均心室率':[60,100],'右臂脈波傳導速度':[null,1400],'左臂脈波傳導速度':[null,1400],'右側踝臂血壓指數':[0.9,1.3],'左側踝臂血壓指數':[0.9,1.3],'紅血球體積分布寬度':[11.5,14.5],'全免疫球蛋白E定量':[null,100],'BMI':[18.5,24],'腰圍':{男:[null,90],女:[null,80]},'收縮壓':[90,129],'舒張壓':[60,79],'脈搏':[60,100],
 '膽固醇':[null,200],'三酸甘油脂':[null,150],'高密度脂蛋白':{男:[40,null],女:[50,null]},'低密度脂蛋白':[null,130],
 '白血球':[4,10],'紅血球':{男:[4.5,5.9],女:[4,5.2]},'血小板':[150,400],'血紅素':{男:[13.5,17.5],女:[12,16]},'血球容積比':{男:[41,53],女:[36,46]},'平均紅血球容積':[80,100],'平均紅血球血色素濃度':[32,36],'平均紅血球血色素':[27,33],'中性球':[40,75],'嗜伊紅性球':[0,6],'鹼性球':[0,2],'淋巴球':[20,45],'單核球':[2,10],
 '飯前血糖':[70,99],'醣化血色素':[4,5.6],'促甲狀腺素TSH':[0.4,4],
@@ -396,7 +437,7 @@ function ckReport(r,sex){
 }
 /* 長段文字自動分行:句號、分號後換行,1. 2. 3. 編號前換行 */
 const fmtMulti=v=>String(v).replace(/([。；;])[ \t]*(?=\S)/g,'$1\n').replace(/[ \t]+(?=\(?\d{1,2}[.、．)]\s*\S)/g,'\n').replace(/\n{2,}/g,'\n').trim();
-const ckLine=x=>`<div class="ckl ${x.bad?'bad':''} ${x.t?'tx':''}"><span class="n">${x.bad?ic('warn','#ff6b6b',16):''}${esc(x.k)}</span><span class="v">${esc(x.t?fmtMulti(x.v):x.v)}${x.u?' <small>'+esc(x.u)+'</small>':''}</span>${x.ref?`<span class="rf">標準 ${esc(x.ref)}</span>`:''}</div>`;
+const ckLine=x=>`<div class="ckl ${x.bad?'bad':''} ${x.t?'tx':''}"><span class="n">${x.bad?ic('warn','#ff6b6b',16):''}<span>${L2(x.k)}</span></span><span class="v">${esc(x.t?fmtMulti(x.v):x.v)}${x.u?' <small>'+esc(x.u)+'</small>':''}</span>${x.ref?`<span class="rf">標準 ${esc(x.ref)}</span>`:''}</div>`;
 
 const dkOf=s=>s.nodate?null:(s.date||'日期');
 const fieldKeys=s=>(s.fields||[]).flatMap(f=>f.g?[]:f.t==='part'?['症狀部位大項','症狀部位細項']:[f.k]);
@@ -532,7 +573,7 @@ function cardHTML(key,r,tagged){
     head=`<b>${esc(r['健檢醫院']||'健康檢查')}</b>${who}${r['方案費用']!==''&&r['方案費用']!==undefined?`<span class="tag">$${esc(r['方案費用'])}</span>`:''}`;
     body=`<div class="kvs"><span class="kv"><i>已填項目</i>${rp.flat.length}</span>${bads.length?`<span class="kv bad"><i>異常</i>${bads.length} 項</span>`:''}</div>`
       +(bads.length?`<div class="ckbad">${bads.map(ckLine).join('')}</div>`:'')
-      +rp.groups.filter(g=>g.items.length).map(g=>{const nb=g.items.filter(x=>x.bad).length,ok=g.items;const cnt=`<span class="cnt">${g.items.length} 項${nb?` · <span style="color:#ff6b6b">${nb} 異常</span>`:''}</span>`;const hd=`${ic(g.icon,null,18)}<span style="color:${ICOL[g.icon]}">${esc(g.name)}</span>${cnt}`;return ok.length?`<details class="ckg"><summary>${hd}</summary>${ok.map(ckLine).join('')}</details>`:`<div class="ckg"><div class="sm0">${hd}</div></div>`}).join('')
+      +rp.groups.filter(g=>g.items.length).map(g=>{const nb=g.items.filter(x=>x.bad).length,ok=g.items;const cnt=`<span class="cnt">${g.items.length} 項${nb?` · <span style="color:#ff6b6b">${nb} 異常</span>`:''}</span>`;const hd=`${ic(g.icon,null,18)}<span style="color:${ICOL[g.icon]}">${L2(g.name)}</span>${cnt}`;return ok.length?`<details class="ckg"><summary>${hd}</summary>${ok.map(ckLine).join('')}</details>`:`<div class="ckg"><div class="sm0">${hd}</div></div>`}).join('')
       +(r['備註']?`<div class="note">${esc(r['備註'])}</div>`:'');
   }else if(key==='symptoms'){
     head=`<b></b>${who}${partTag(r)}`;
@@ -547,8 +588,8 @@ function cardHTML(key,r,tagged){
       if(key==='meds'&&(f.k==='藥品'||f.k==='劑量'))continue;
       if(key==='visits'&&f.k==='醫院名稱')continue;
       const v=r[f.k];if(v===undefined||v==='')continue;
-      if(f.t==='text'||f.t==='area')blk.push(`<div class="blk"><i>${f.k}</i><div class="bt">${esc(v)}</div></div>`);
-      else kv.push(`<span class="kv"><i>${f.k}</i>${esc(v)}${f.u?' '+f.u:''}</span>`);
+      if(f.t==='text'||f.t==='area')blk.push(`<div class="blk"><i>${L2(f.k)}</i><div class="bt">${esc(v)}</div></div>`);
+      else kv.push(`<span class="kv"><i>${L2(f.k)}</i>${esc(v)}${f.u?' '+f.u:''}</span>`);
     }
     body=(kv.length?`<div class="kvs">${kv.join('')}</div>`:'')+(blk.length?`<div class="blks">${blk.join('')}</div>`:'')+(r['備註']?`<div class="note">${esc(r['備註'])}</div>`:'');
   }
@@ -659,7 +700,7 @@ function ckChart(whos,f){
   const series=whos.map((who,i)=>({name:who,color:whos.length>1?PAL[i%PAL.length]:'#d4b483',pts:(DB['健檢紀錄']||[]).filter(r=>r['姓名']===who&&r['健檢日期']).map(r=>({x:dayN(r['健檢日期']),y:numOf(r[f.item]),d:r['健檢日期']})).filter(p=>p.y!==null).sort((a,b)=>a.x-b.x)})).filter(x=>x.pts.length);
   const rf=whos.map(w=>{const t=refText(f.item,sexOf(w));return t?(whos.length>1?w+' ':'')+'標準 '+t:''}).filter(Boolean).join(' · ');
   const body=series.length?lineSVG(series)+(series.length>1?legend(series.map(x=>[x.name,x.color])):'')+(rf?`<div class="note">${esc(rf)}</div>`:''):nodata('這個項目是文字紀錄或還沒有數字,沒有圖表');
-  return `<div class="card"><div class="ch"><b>${esc(f.item)}${it&&it.u?' '+esc(it.u):''} 趨勢</b><button class="chip sm" data-act="ckitem" data-k="">關閉</button></div>${body}</div>`;
+  return `<div class="card"><div class="ch"><b>${L2(f.item)}${it&&it.u?' '+esc(it.u):''} 趨勢</b><button class="chip sm" data-act="ckitem" data-k="">關閉</button></div>${body}</div>`;
 }
 
 /* ============ 表單 ============ */
@@ -692,7 +733,7 @@ function openForm(key,row,mode='new'){
   if(dk)h+=`<div class="fld"><label>日期</label><input type="date" name="${dk}" value="${esc(mode==='edit'||mode==='again'?b[dk]:TODAY())}" required></div>`;
   h+=`<div class="fld"><label>姓名</label>${s.nameText?`<input name="姓名" value="${esc(person)}" required>`:personSel(person)}</div>`;
   for(const f of s.fields){
-    if(f.g){h+=`<div class="gh full">${f.g}</div>`;continue}
+    if(f.g){h+=`<div class="gh full">${L2(f.g)}</div>`;continue}
     if(f.t==='part'){
       h+=`<div class="fld full"><label>症狀部位:先選大項,再選細項</label><div class="chips" id="pp"></div><div class="chips" id="pd" style="margin-top:8px"></div><input type="hidden" name="症狀部位大項" value="${esc(val('症狀部位大項'))}"><input type="hidden" name="症狀部位細項" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[0])}"><div id="pxw" style="margin-top:8px"><div id="pxe" hidden><label style="display:block;color:var(--mut);margin-bottom:4px">眼睛度數 <small style="color:var(--pri)">選填,例如 右 0、左 50</small></label><div class="eyes"><div class="eyef"><b>右</b><input type="text" id="pxr" placeholder="0" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[0])}"></div><div class="eyef"><b>左</b><input type="text" id="pxl" placeholder="50" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[1])}"></div></div></div><div id="pxo"><label style="display:block;color:var(--mut);margin-bottom:4px">細項補充 <small style="color:var(--pri)">選填</small></label><input type="text" id="px" placeholder="補充說明,例如 左邊、位置" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])}"></div></div></div>`;continue}
     if(f.t==='chips'){
@@ -701,10 +742,10 @@ function openForm(key,row,mode='new'){
     if(f.t==='time'&&f.k==='時間'&&mode!=='edit')v=NOW();
     if(key==='vitals'&&fresh&&f.k==='身高')v=latestOf('身體數值',person,'身高');
     const full=f.t==='area'||f.full?'full':'';
-    if(f.t==='area'){h+=`<div class="fld full"><label>${f.k}</label><textarea name="${f.k}" rows="2">${esc(v)}</textarea></div>`;continue}
-    if(f.t==='sel'){h+=`<div class="fld"><label>${f.k}${f.req?' <small>必填,分析用</small>':''}</label><select name="${f.k}" ${f.req?'required':''}>${f.o.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select></div>`;continue}
+    if(f.t==='area'){h+=`<div class="fld full"><label>${L2(f.k)}</label><textarea name="${f.k}" rows="2">${esc(v)}</textarea></div>`;continue}
+    if(f.t==='sel'){h+=`<div class="fld"><label>${L2(f.k)}${f.req?' <small>必填,分析用</small>':''}</label><select name="${f.k}" ${f.req?'required':''}>${f.o.map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select></div>`;continue}
     const type=f.t==='time'?'time':f.t==='date'?'date':f.t==='text'?'text':'number';
-    h+=`<div class="fld ${full}"><label>${f.k}${f.req?' <small>必填,分析用</small>':''}${f.u?` <small>${f.u}</small>`:''}${f.auto?' <small>自動計算</small>':''}</label><input type="${type}" name="${f.k}" value="${esc(v)}" ${f.req?'required':''} ${type==='number'?`step="${f.step||'any'}" inputmode="decimal"`:''} ${f.auto?'readonly':''}>${f.water?'<div class="chips" style="margin-top:6px">'+[150,250,500,1000].map(n=>`<button type="button" class="chip" data-add="${n}">+${n}</button>`).join('')+'</div>':''}</div>`;
+    h+=`<div class="fld ${full}"><label>${L2(f.k)}${f.req?' <small>必填,分析用</small>':''}${f.u?` <small>${f.u}</small>`:''}${f.auto?' <small>自動計算</small>':''}</label><input type="${type}" name="${f.k}" value="${esc(v)}" ${f.req?'required':''} ${type==='number'?`step="${f.step||'any'}" inputmode="decimal"`:''} ${f.auto?'readonly':''}>${f.water?'<div class="chips" style="margin-top:6px">'+[150,250,500,1000].map(n=>`<button type="button" class="chip" data-add="${n}">+${n}</button>`).join('')+'</div>':''}</div>`;
   }
   h+='</form>';
   const foot=`<button class="btn sec" data-act="close">取消</button>${s.again&&mode!=='edit'?'<button class="btn sec" id="saveAgain">儲存並再新增一筆</button>':''}<button class="btn" id="saveBtn">儲存</button>`;
@@ -805,13 +846,13 @@ function openCheckup(row,mode){
   <div class="fld"><label>方案費用 <small>元</small></label><input type="number" inputmode="decimal" name="方案費用" value="${esc(v('方案費用'))}"></div>
   <div class="fld full"><label>備註</label><textarea name="備註" rows="2">${esc(v('備註'))}</textarea></div></div>
   <div class="gh" style="margin:14px 0 8px">檢查項目(有標準值的項目,超出會自動標紅色警示;也可以手動按「異常」)</div>
-  <input type="search" id="iq" placeholder="搜尋項目,例如 肝、血糖、LDL" style="margin-bottom:10px">`;
+  <input type="search" id="iq" placeholder="搜尋項目(中英文),例如 肝、血糖、LDL、ALT" style="margin-bottom:10px">`;
   CK.forEach((g,gi)=>{
     const n=g[2].filter(i=>v(i[0])!=='').length;
-    h+=`<details class="grp" data-g="${gi}" ${n?'open':''}><summary>${ic(g[1],null,22)}<span style="color:${ICOL[g[1]]}">${g[0]}</span><span class="cnt">已填 <span class="gn">${n}</span>/${g[2].length}</span></summary><div class="items">`;
+    h+=`<details class="grp" data-g="${gi}" ${n?'open':''}><summary>${ic(g[1],null,22)}<span style="color:${ICOL[g[1]]}">${L2(g[0])}</span><span class="cnt">已填 <span class="gn">${n}</span>/${g[2].length}</span></summary><div class="items">`;
     g[2].forEach(i=>{
       const bad=flags.has(i[0]);
-      h+=`<div class="it ${bad?'bad':''}" data-k="${esc(i[0])}"><label>${esc(i[0])}${i[1]?` <small style="color:var(--pri)">${i[1]}</small>`:''}<span class="wi">${ic('warn','#ff6b6b',16)}</span><small class="sd"></small></label><div class="row">${i[2]==='t'?`<textarea name="${esc(i[0])}" rows="3">${esc(v(i[0]))}</textarea>`:`<input type="number" step="any" inputmode="decimal" name="${esc(i[0])}" value="${esc(v(i[0]))}" ${i[0]==='BMI'?'readonly':''}>`}<button type="button" class="flag ${bad?'on':''}" title="標記異常">異常</button></div></div>`;
+      h+=`<div class="it ${bad?'bad':''}" data-k="${esc(i[0])}" data-en="${esc(EN[i[0]]||'')}"><label>${L2(i[0])}${i[1]?` <small style="color:var(--pri)">${i[1]}</small>`:''}<span class="wi">${ic('warn','#ff6b6b',16)}</span><small class="sd"></small></label><div class="row">${i[2]==='t'?`<textarea name="${esc(i[0])}" rows="3">${esc(v(i[0]))}</textarea>`:`<input type="number" step="any" inputmode="decimal" name="${esc(i[0])}" value="${esc(v(i[0]))}" ${i[0]==='BMI'?'readonly':''}>`}<button type="button" class="flag ${bad?'on':''}" title="標記異常">異常</button></div></div>`;
     });
     h+='</div></details>';
   });
@@ -835,7 +876,7 @@ function openCheckup(row,mode){
     const q=e.target.value.trim().toLowerCase();
     F.querySelectorAll('details.grp').forEach(d=>{
       let any=false;
-      d.querySelectorAll('.it').forEach(it=>{const m=!q||it.dataset.k.toLowerCase().includes(q)||d.firstElementChild.textContent.toLowerCase().includes(q);it.classList.toggle('hide',!m);if(m)any=true});
+      d.querySelectorAll('.it').forEach(it=>{const m=!q||(it.dataset.k+' '+it.dataset.en).toLowerCase().includes(q)||d.firstElementChild.textContent.toLowerCase().includes(q);it.classList.toggle('hide',!m);if(m)any=true});
       d.style.display=any?'':'none';if(q&&any)d.open=true;
     });
   };
@@ -863,11 +904,11 @@ function drawCompare(){
     h+=`<h3 style="margin:14px 2px 8px;color:var(--pri)">${esc(who)}${sex?'':' <small style="color:var(--mut);font-weight:400">(未填性別,部分標準值不顯示)</small>'}</h3><div class="tbl"><table><tr><th>項目</th><th>標準</th>`+recs.map(r=>`<th>${esc(r['健檢日期'])}<br><small style="font-weight:400">${esc(r['健檢醫院']||'')}</small></th>`).join('')+'</tr>';
     CK.forEach((g,gi)=>{
       if(f.cg!==undefined&&f.cg!==''&&String(f.cg)!==String(gi))return;
-      const rows=g[2].filter(i=>(!f.ci||i[0].toLowerCase().includes(f.ci.toLowerCase()))&&recs.some(r=>r[i[0]]!==undefined&&r[i[0]]!==''));
+      const rows=g[2].filter(i=>(!f.ci||(i[0]+' '+(EN[i[0]]||'')).toLowerCase().includes(f.ci.toLowerCase()))&&recs.some(r=>r[i[0]]!==undefined&&r[i[0]]!==''));
       if(!rows.length)return;
-      h+=`<tr class="gr"><td colspan="${recs.length+2}" style="color:${ICOL[g[1]]}">${ic(g[1],null,18)} ${g[0]}</td></tr>`;
+      h+=`<tr class="gr"><td colspan="${recs.length+2}" style="color:${ICOL[g[1]]}">${ic(g[1],null,18)} ${L2(g[0])}</td></tr>`;
       rows.forEach(i=>{
-        h+=`<tr><td class="ck" data-act="ckitem" data-k="${esc(i[0])}">${esc(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''} ${i[2]==='t'?'tt':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(i[2]==='t'?fmtMulti(x):x)}</td>`}).join('')+'</tr>';
+        h+=`<tr><td class="ck" data-act="ckitem" data-k="${esc(i[0])}">${L2(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''} ${i[2]==='t'?'tt':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(i[2]==='t'?fmtMulti(x):x)}</td>`}).join('')+'</tr>';
       });
     });
     h+='</table></div>';
@@ -902,6 +943,9 @@ const SYMGRP=[
  {n:'皮膚',re:/^(紅疹|癢|乾燥|脫皮|濕疹|蚊蟲叮咬)$/,g:'作息',tip:['皮膚鬧脾氣。洗澡水別太燙,洗完 3 分鐘內擦乳液,穿棉質衣服。','皮膚在抗議。洗澡水別太燙,洗完 3 分鐘內擦乳液,穿棉質衣服。']}
 ];
 const CKTIP=[
+ [/脈波|踝臂|周邊血管|動脈硬化/,'運動','血管硬度或血流有警訊。多走路、做有氧運動、少鹽少油,戒菸,請心臟內科評估。',L('walk')],
+ [/免疫球蛋白E/,'作息','過敏體質提醒。寢具每週洗、房間通風、減少塵蟎,記下過敏原,請過敏免疫科評估。'],
+ [/體積分布寬度/,'飲食','紅血球大小不均,可能和缺鐵、維生素 B12 或葉酸不足有關,請醫師確認。'],
  [/膽固醇|低密度|三酸甘油脂|LDL/,'飲食','血脂紅字,血管快塞住了!少吃炸物肥肉內臟,多吃燕麥、豆類、魚,再加每天快走。',L('walk')],
  [/血糖|醣化/,'飲食','血糖亮紅燈!含糖飲料、白飯麵包減量,飯後散步 15 分鐘。',L('walk')],
  [/尿酸/,'飲食','尿酸高,痛風在排隊。少喝啤酒、少吃內臟濃湯,多喝水。'],
