@@ -50,11 +50,11 @@ input[readonly]{background:#101012;color:var(--mut)}
 .tag.part{font-weight:700}
 .tag.sv{background:transparent;border:1px solid;font-weight:700}
 .kvs{display:flex;flex-wrap:wrap;gap:6px 16px}
-.en{color:var(--mut);font-weight:400;margin-left:6px}
-.blk>i .en,.tbl td.ck .en,.ckg .en{display:block;margin-left:0}
-.ckl .n .en{display:block;margin-left:0}
+.en{color:inherit;font-weight:400;font-size:12px;margin-left:6px}
 .blks{margin-top:6px}
-.blk{display:grid;grid-template-columns:5.6em minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.blk{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
+.blk>i{flex:none;max-width:55%}
+.blk>.bt{flex:1;min-width:0}
 .blk:first-child{border-top:0}
 .blk>i{font-style:normal;color:var(--pri);font-weight:700}
 .bt{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
