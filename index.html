@@ -121,7 +121,9 @@ details.grp[open]>summary{border-bottom:1px solid var(--line);background:var(--p
 .tbl td:first-child,.tbl th:first-child{position:sticky;left:0;background:var(--card);font-weight:600}
 .tbl th:first-child{background:#1d1b17}
 .tbl td.bad{color:var(--warn);font-weight:700}
-.tbl td.ck{cursor:pointer}
+.tbl td.ck{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tbl td.ck .hl{padding:0 3px;margin:0 -3px;border-radius:3px;background-image:linear-gradient(transparent 50%,rgba(255,226,102,0) 50%);transition:background-image .2s;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.tbl td.ck:hover .hl,.tbl td.ck:active .hl,.tbl td.ck.sel .hl{background-image:linear-gradient(transparent 38%,rgba(255,226,102,.55) 38%,rgba(255,226,102,.55) 92%,transparent 92%);color:#fff}
 .ch{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .lgs{margin-top:6px}
 .lg{display:inline-flex;align-items:center;gap:5px;margin-right:12px;color:var(--mut)}
@@ -908,7 +910,7 @@ function drawCompare(){
       if(!rows.length)return;
       h+=`<tr class="gr"><td colspan="${recs.length+2}" style="color:${ICOL[g[1]]}">${ic(g[1],null,18)} ${L2(g[0])}</td></tr>`;
       rows.forEach(i=>{
-        h+=`<tr><td class="ck" data-act="ckitem" data-k="${esc(i[0])}">${L2(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''} ${i[2]==='t'?'tt':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(i[2]==='t'?fmtMulti(x):x)}</td>`}).join('')+'</tr>';
+        h+=`<tr><td class="ck ${f.item===i[0]?'sel':''}" data-act="ckitem" data-k="${esc(i[0])}"><span class="hl">${L2(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</span></td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''} ${i[2]==='t'?'tt':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(i[2]==='t'?fmtMulti(x):x)}</td>`}).join('')+'</tr>';
       });
     });
     h+='</table></div>';
