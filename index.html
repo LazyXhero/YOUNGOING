@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
-<title>養序 YOUNGOING | 健康有跡可循 . 美好持續發生</title>
+<title>養序</title>
 <style>
 :root{--bg:#0a0a0b;--card:#141416;--card2:#1a1a1d;--ink:#f1ede6;--mut:#8d8a84;--pri:#d4b483;--pri2:rgba(212,180,131,.12);--on:#14110c;--warn:#ff7a7a;--warn2:rgba(255,122,122,.12);--line:#27272b;--r:14px}
 *{box-sizing:border-box}
@@ -22,7 +22,8 @@ header select{font:inherit;padding:6px 12px;border-radius:20px;border:1px solid 
 nav{position:sticky;top:var(--hh,58px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:4px 8px}
 @media(min-width:760px){nav{grid-template-columns:repeat(9,1fr)}}
 nav button{border:0;background:none;padding:8px 2px;color:var(--mut);border-bottom:2px solid transparent;white-space:nowrap;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px}
-nav button.on{color:var(--ink);border-color:var(--pri)}
+nav button{opacity:.7}
+nav button.on{opacity:1;border-color:currentColor}
 @media(max-width:759px){
 header{position:static;padding:10px 14px}
 header h1{flex:1 1 100%;display:block;min-width:0}
@@ -224,7 +225,7 @@ virus:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 
 const ICOL={vessel:'#ff8a5c',shield:'#7bd88f',gender:'#f78fb3',warn:'#ff6b6b',plan:'#e6c15a',leaf:'#d4b483',home:'#d4b483',vitals:'#ff6b81',diet:'#9be564',meds:'#4cc3ff',symptoms:'#ffb347',visits:'#5eead4',checkup:'#b78cff',settings:'#c9c9c9',
 brain:'#b78cff',eye:'#4cc3ff',ent:'#ffb347',lungs:'#5eead4',heart:'#ff6b81',stomach:'#ffd166',liver:'#d9955f',kidney:'#5b9dff',bone:'#d6c7a1',limb:'#9be564',skin:'#ff9e7a',body:'#e8e2d6',other:'#9aa0a6',drop:'#ff4d6d',flask:'#f4a259',female:'#ff8fb8',virus:'#c084fc'};
 const ic=(k,c,sz)=>`<svg class="ic" viewBox="0 0 24 24" style="color:${c||ICOL[k]||'currentColor'}${sz?`;width:${sz}px;height:${sz}px`:''}">${ICON[k]||''}</svg>`;
-$('#logo').innerHTML=ic('leaf','#d4b483',24)+'<span class="t1">養序 YOUNGOING</span><span class="t2"><i class="sp">| </i>健康有跡可循 . 美好持續發生</span>';
+$('#logo').innerHTML=ic('leaf','#d4b483',24)+'<span class="t1">養序</span><span class="t2"><i class="sp">| </i><span id="slogan"></span></span>';
 (()=>{const h=document.querySelector('header'),set=()=>document.documentElement.style.setProperty('--hh',h.offsetHeight+'px');set();if(window.ResizeObserver)new ResizeObserver(set).observe(h);window.addEventListener('resize',set)})();
 
 /* ============ 症狀選單(可自行增減:部位 → 細項 → 症狀;順序是從頭到腳,最後是全身、其他) ============ */
@@ -530,7 +531,7 @@ function render(){
   if(cfg.person&&!persons().includes(cfg.person)){cfg.person='';saveCfg()}
   const w=$('#who');
   w.innerHTML='<option value="">全部成員</option>'+persons().map(n=>`<option ${n===cfg.person?'selected':''}>${esc(n)}</option>`).join('');
-  $('#nav').innerHTML=TABS.map(t=>`<button class="${UI.tab===t[0]?'on':''}" data-act="tab" data-t="${t[0]}">${ic(t[1])}${t[2]}</button>`).join('');
+  $('#nav').innerHTML=TABS.map(t=>`<button class="${UI.tab===t[0]?'on':''}" data-act="tab" data-t="${t[0]}" style="color:${ICOL[t[1]]||'var(--mut)'}">${ic(t[1])}${t[2]}</button>`).join('');
   badge();
   const m=$('#main');
   if(UI.tab==='home')m.innerHTML=homeHTML();
@@ -951,6 +952,19 @@ const LK={walk:['快走示範','快走 正確姿勢 運動'],rope:['跳繩教學
 const L=(...k)=>k.map(x=>LK[x]);
 const hs=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))>>>0;return h};
 const pick=a=>Array.isArray(a)?a[(Math.floor(dayN(TODAY()))+hs(a[0]))%a.length]:a;
+/* ============ 標題旁的一句話:早、中、晚各一句,每天不同 ============ */
+const SLOG={
+m:['早安!今天也要吃得漂亮,動得開心','早餐吃好好,一天都輕鬆','起床喝杯水,身體笑咪咪','今天的你,比昨天更健康一點點','早起一杯溫開水,腸胃慢慢醒過來','先伸個懶腰,再迎接美好','蛋白質不能少,精神才會好','好好吃早餐,別讓肚子唱空城','今天多走一點路,健康就近一點','笑一個,心情先開機','陽光已就位,就差你出門曬一曬','慢慢來比較快,今天也穩穩的','早睡早起,身體會回禮','先喝水再出門,元氣滿滿一整天'],
+n:['午餐吃得巧,下午精神好','菜先吃,肉後吃,血糖不暴衝','飯後走一走,比喝咖啡有效','吃七分飽,下午不打瞌睡','中午補水站,今天喝夠了嗎','坐太久了?起來動一動','無糖茶一杯,清爽過下午','一半是菜一半是愛,午餐剛剛好','午後犯睏別慌,深呼吸伸懶腰','吃得開心最重要,吃得均衡更重要','今天已經走過一半,你好棒','午休十分鐘,下午更輕鬆','少油少鹽少負擔,多蔬多水多健康','吃飯慢慢嚼,幸福多一點'],
+e:['晚餐別太晚,睡眠才會甜','今天辛苦了,放下手機好好睡','晚餐八分飽,明天更輕巧','泡個熱水澡,把疲憊沖走','睡前一小時,把螢幕關掉','今天的你已經很棒,早點休息吧','宵夜說掰掰,體重不加碼','深呼吸三下,今天圓滿收工','夜深了,身體要充電,你也是','喝杯溫水,不要再滑了','把煩惱留在今天,把好眠帶進明天','睡得飽,長得高,心情更美妙','晚安好夢,明天再發光','今晚早點睡,明天不累累']};
+/* 特定星期與時段的專屬句(0=週日…6=週六;m早 n中 e晚) */
+const SLSP={'5e':['今晚小周末,想放縱一下也別吃太過火','TGIF!想放鬆就放鬆,別放縱過頭','週五夜,吃好玩好,別撐到睡不著'],'1m':['週一加油!先吃早餐,再去打怪','週一不憂鬱,早餐先吃飽'],'6m':['週末也早起動一動,別讓床把你吃掉'],'6n':['週末午餐,吃得開心也要吃得剛好'],'6e':['週末夜,聚餐可以,記得多喝水'],'0e':['週日收心操,早點睡迎接週一','週日晚上,把身體調回上班模式']};
+function sloganNow(){
+  const d=new Date(),h=d.getHours(),per=h>=5&&h<11?'m':h>=11&&h<17?'n':'e';
+  const pool=SLSP[d.getDay()+per]||SLOG[per];
+  return pool[(Math.floor(dayN(TODAY()))*3+'mne'.indexOf(per)+hs(per))%pool.length];
+}
+function setSlogan(){const el=document.getElementById('slogan');if(el)el.textContent=sloganNow()}
 const SYMGRP=[
  {n:'睡眠與精神',re:/^(失眠|易醒|夜驚|打鼾|疲累)$/,g:'作息',tip:['睡不好又累,什麼都做不好。固定睡覺時間、睡前關螢幕、白天去曬太陽。','累到什麼都不想做?固定睡覺時間,睡前關螢幕,白天曬曬太陽。']},
  {n:'腸胃',re:/^(便秘|腹瀉|腹脹|胃痛|胃酸逆流|脹氣|噁心|嘔吐|腹痛|抽肚|食慾差|排便)$/,g:'飲食',tip:['腸胃在抗議!慢慢嚼、多吃菜、少吃炸、多喝水,睡前 3 小時別再吃。','肚子在鬧脾氣。吃慢一點、多吃菜、少吃炸、多喝水。']},
@@ -1181,7 +1195,7 @@ function homeHTML(){
   const ls=rows('身體狀況').reverse().sort(byDT);
   const lc=rows('健檢紀錄').sort((a,b)=>(b['健檢日期']||'').localeCompare(a['健檢日期']||''))[0];
   let h=`<div class="dh" style="margin-top:0">${t} ${wday(t)} · ${who?esc(who):'全部成員'}</div>`;
-  h+='<div class="qa-grid">'+['vitals','diet','meds','symptoms','visits','checkup'].map(k=>`<button class="qa" data-act="new" data-k="${k}">${ic(SEC[k].i)}${SEC[k].label}</button>`).join('')+'</div>';
+  h+='<div class="qa-grid">'+['vitals','diet','meds','symptoms','visits','checkup'].map(k=>`<button class="qa" data-act="new" data-k="${k}" style="color:${ICOL[SEC[k].i]}">${ic(SEC[k].i)}${SEC[k].label}</button>`).join('')+'</div>';
   h+=`<div class="stat"><div><b>${water}</b><small>今日飲水 ml</small></div><div><b>${medsT}</b><small>今日用藥</small></div><div><b>${symT}</b><small>今日症狀</small></div></div>`;
   const KEYS=['vitals','diet','meds','symptoms','visits','checkup'];
   const hf=UI.hf||'',hn=UI.hn||60;
@@ -1251,6 +1265,8 @@ const autoPull=()=>{if(!cfg.url||flushing||Q.length||document.hidden||!$('#modal
 document.addEventListener('visibilitychange',autoPull);window.addEventListener('focus',autoPull);
 setInterval(autoPull,60000);
 
+setSlogan();
+setInterval(setSlogan,300000);document.addEventListener('visibilitychange',setSlogan);window.addEventListener('focus',setSlogan);
 render();
 if(cfg.url)pull(true);
 if(!persons().length&&!cfg.url){UI.tab='settings';render()}
