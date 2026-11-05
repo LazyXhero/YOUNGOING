@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0b">
-<title>養序 YOUNGOING</title>
+<title>養序 YOUNGOING | 健康有跡可循 . 美好持續發生</title>
 <style>
 :root{--bg:#0a0a0b;--card:#141416;--card2:#1a1a1d;--ink:#f1ede6;--mut:#8d8a84;--pri:#d4b483;--pri2:rgba(212,180,131,.12);--on:#14110c;--warn:#ff7a7a;--warn2:rgba(255,122,122,.12);--line:#27272b;--r:14px}
 *{box-sizing:border-box}
@@ -14,6 +14,8 @@ h1,h3,small{font-size:inherit}
 button{font:inherit;cursor:pointer}
 .ic{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px}
 header{position:sticky;top:0;z-index:21;background:var(--bg);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+header h1 .t1{white-space:nowrap}
+header h1 .t2{font-weight:700}header h1 .t2 i{font-style:normal}
 header h1{font-weight:700;margin:0;flex:1;min-width:120px;color:var(--pri);display:flex;align-items:center;gap:8px}
 header select{font:inherit;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:var(--card2);color:var(--ink);max-width:140px;width:auto}
 #sync{background:transparent;border-radius:20px;padding:5px 12px;border:1px solid var(--line);color:var(--mut)}
@@ -21,6 +23,17 @@ nav{position:sticky;top:var(--hh,58px);z-index:20;background:var(--bg);border-bo
 @media(min-width:760px){nav{grid-template-columns:repeat(9,1fr)}}
 nav button{border:0;background:none;padding:8px 2px;color:var(--mut);border-bottom:2px solid transparent;white-space:nowrap;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px}
 nav button.on{color:var(--ink);border-color:var(--pri)}
+@media(max-width:759px){
+header{position:static;padding:10px 14px}
+header h1{flex:1 1 100%;display:block;min-width:0}
+header h1 .ic{vertical-align:-5px;margin-right:8px}
+header h1 .t1,header h1 .t2{white-space:normal}
+header h1 .t2 .sp{display:inline}
+header h1 .t2{margin-left:6px}
+nav{top:0;grid-template-columns:repeat(9,minmax(0,1fr));padding:2px 2px}
+nav button{padding:5px 0;font-size:12px;gap:1px}
+nav button .ic{width:20px;height:20px}
+}
 .wrap{max-width:980px;margin:0 auto;padding:14px 14px 90px}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .bar input[type=search],.bar input[type=date]{flex:1;min-width:130px}
@@ -132,8 +145,9 @@ details.grp[open]>summary{border-bottom:1px solid var(--line);background:var(--p
 .lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .tbl tr.gr td{background:#19181a;font-weight:700}
 .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.qa{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 4px;text-align:center;color:var(--ink);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px}
-.qa .ic{width:28px;height:28px}
+.qa-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.qa{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 0;text-align:center;color:var(--ink);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;line-height:1.25}
+.qa .ic{width:22px;height:22px}
 .qa:active{background:var(--pri2)}
 .stat{display:flex;gap:8px;margin-bottom:14px}
 .stat div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 8px;text-align:center}
@@ -210,7 +224,7 @@ virus:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 
 const ICOL={vessel:'#ff8a5c',shield:'#7bd88f',gender:'#f78fb3',warn:'#ff6b6b',plan:'#e6c15a',leaf:'#d4b483',home:'#d4b483',vitals:'#ff6b81',diet:'#9be564',meds:'#4cc3ff',symptoms:'#ffb347',visits:'#5eead4',checkup:'#b78cff',settings:'#c9c9c9',
 brain:'#b78cff',eye:'#4cc3ff',ent:'#ffb347',lungs:'#5eead4',heart:'#ff6b81',stomach:'#ffd166',liver:'#d9955f',kidney:'#5b9dff',bone:'#d6c7a1',limb:'#9be564',skin:'#ff9e7a',body:'#e8e2d6',other:'#9aa0a6',drop:'#ff4d6d',flask:'#f4a259',female:'#ff8fb8',virus:'#c084fc'};
 const ic=(k,c,sz)=>`<svg class="ic" viewBox="0 0 24 24" style="color:${c||ICOL[k]||'currentColor'}${sz?`;width:${sz}px;height:${sz}px`:''}">${ICON[k]||''}</svg>`;
-$('#logo').innerHTML=ic('leaf','#d4b483',24)+'養序 YOUNGOING';
+$('#logo').innerHTML=ic('leaf','#d4b483',24)+'<span class="t1">養序 YOUNGOING</span><span class="t2"><i class="sp">| </i>健康有跡可循 . 美好持續發生</span>';
 (()=>{const h=document.querySelector('header'),set=()=>document.documentElement.style.setProperty('--hh',h.offsetHeight+'px');set();if(window.ResizeObserver)new ResizeObserver(set).observe(h);window.addEventListener('resize',set)})();
 
 /* ============ 症狀選單(可自行增減:部位 → 細項 → 症狀;順序是從頭到腳,最後是全身、其他) ============ */
@@ -1167,7 +1181,7 @@ function homeHTML(){
   const ls=rows('身體狀況').reverse().sort(byDT);
   const lc=rows('健檢紀錄').sort((a,b)=>(b['健檢日期']||'').localeCompare(a['健檢日期']||''))[0];
   let h=`<div class="dh" style="margin-top:0">${t} ${wday(t)} · ${who?esc(who):'全部成員'}</div>`;
-  h+='<div class="home-grid">'+['vitals','diet','meds','symptoms','visits','checkup'].map(k=>`<button class="qa" data-act="new" data-k="${k}">${ic(SEC[k].i)}${SEC[k].label}</button>`).join('')+'</div>';
+  h+='<div class="qa-grid">'+['vitals','diet','meds','symptoms','visits','checkup'].map(k=>`<button class="qa" data-act="new" data-k="${k}">${ic(SEC[k].i)}${SEC[k].label}</button>`).join('')+'</div>';
   h+=`<div class="stat"><div><b>${water}</b><small>今日飲水 ml</small></div><div><b>${medsT}</b><small>今日用藥</small></div><div><b>${symT}</b><small>今日症狀</small></div></div>`;
   const KEYS=['vitals','diet','meds','symptoms','visits','checkup'];
   const hf=UI.hf||'',hn=UI.hn||60;
