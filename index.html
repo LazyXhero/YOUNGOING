@@ -394,7 +394,7 @@ const EN={
 '右眼視力':'Right Eye Vision','左眼視力':'Left Eye Vision',
 '收縮壓':'Systolic BP','舒張壓':'Diastolic BP','脈搏':'Pulse','心電圖':'ECG','平均心室率':'Average Ventricular Rate','膽固醇':'Total Cholesterol','三酸甘油脂':'Triglycerides','高密度脂蛋白':'HDL-C','低密度脂蛋白':'LDL-C',
 '周邊動脈硬化評估':'Peripheral Arterial Stiffness Assessment','右臂脈波傳導速度':'Right Brachial PWV','左臂脈波傳導速度':'Left Brachial PWV','右側踝臂血壓指數':'Right ABI','左側踝臂血壓指數':'Left ABI','右側周邊血管彈性':'Right Peripheral Vascular Elasticity','左側周邊血管彈性':'Left Peripheral Vascular Elasticity','右側周邊血管阻塞程度':'Right Peripheral Vascular Occlusion','左側周邊血管阻塞程度':'Left Peripheral Vascular Occlusion',
-'白血球':'WBC','紅血球':'RBC','血小板':'Platelets (PLT)','血紅素':'Hemoglobin (Hb)','血球容積比':'Hematocrit (Hct)','平均紅血球容積':'MCV','平均紅血球血色素濃度':'MCHC','平均紅血球血色素':'MCH','紅血球體積分布寬度':'RDW','中性球':'Neutrophils','嗜伊紅性球':'Eosinophils','鹼性球':'Basophils','淋巴球':'Lymphocytes','單核球':'Monocytes',
+'白血球':'WBC','紅血球':'RBC','血小板計數':'Platelet Count (PLT)','紅血球分布寬度_標準差':'RDW-SD','紅血球分布寬度-變異數':'RDW-CV','有核紅血球':'Nucleated RBC (NRBC)','血紅素':'Hemoglobin (Hb)','血球容積比':'Hematocrit (Hct)','平均紅血球容積':'MCV','平均紅血球血色素濃度':'MCHC','平均紅血球血色素':'MCH','嗜中性白血球':'Neutrophils','嗜伊紅性白血球':'Eosinophils','嗜鹼性白血球':'Basophils','淋巴球':'Lymphocytes','單核球':'Monocytes',
 '飯前血糖':'Fasting Glucose','醣化血色素':'HbA1c','促甲狀腺素TSH':'TSH',
 '胸部X光':'Chest X-ray','低劑量肺部斷層掃描LDC':'Low-dose CT (LDCT)',
 '腹部超音波':'Abdominal Ultrasound','上消化道攝影':'Upper GI Series','下消化道攝影':'Lower GI Series','糞便':'Stool',
@@ -415,7 +415,7 @@ const CK_BASE=[
 ['腦神經 | 眼睛','brain',[['右眼視力',''],['左眼視力','']]],
 ['心血管','heart',[['收縮壓','mmHg'],['舒張壓','mmHg'],['脈搏','bpm'],['心電圖','','t'],['平均心室率','bpm'],['膽固醇','mg/dL'],['三酸甘油脂','mg/dL'],['高密度脂蛋白','mg/dL'],['低密度脂蛋白','mg/dL']]],
 ['周邊血管 | 動脈硬化','vessel',[['周邊動脈硬化評估','','t'],['右臂脈波傳導速度','cm/s'],['左臂脈波傳導速度','cm/s'],['右側踝臂血壓指數',''],['左側踝臂血壓指數',''],['右側周邊血管彈性','','t'],['左側周邊血管彈性','','t'],['右側周邊血管阻塞程度','','t'],['左側周邊血管阻塞程度','','t']]],
-['血液','drop',[['白血球','10³/µL'],['紅血球','10⁶/µL'],['血小板','10³/µL'],['血紅素','g/dL'],['血球容積比','%'],['平均紅血球容積','fL'],['平均紅血球血色素濃度','g/dL'],['平均紅血球血色素','pg'],['紅血球體積分布寬度','%'],['中性球','%'],['嗜伊紅性球','%'],['鹼性球','%'],['淋巴球','%'],['單核球','%']]],
+['血液','drop',[['白血球','10³/µL'],['紅血球','10⁶/µL'],['血紅素','g/dL'],['血球容積比','%'],['平均紅血球容積','fL'],['平均紅血球血色素','pg'],['平均紅血球血色素濃度','g/dL'],['紅血球分布寬度_標準差','fL'],['紅血球分布寬度-變異數','%'],['血小板計數','10³/µL'],['有核紅血球','/100 WBC'],['嗜中性白血球','%'],['嗜伊紅性白血球','%'],['嗜鹼性白血球','%'],['淋巴球','%'],['單核球','%']]],
 ['代謝 | 內分泌','flask',[['飯前血糖','mg/dL'],['醣化血色素','%'],['促甲狀腺素TSH','µIU/mL']]],
 ['肺部','lungs',[['胸部X光','','t'],['低劑量肺部斷層掃描LDC','','t']]],
 ['腸胃','stomach',[['腹部超音波','','t'],['上消化道攝影','','t'],['下消化道攝影','','t'],['糞便','','t']]],
@@ -430,8 +430,11 @@ let CK=CK_BASE;
 let CKITEMS=CK.flatMap(g=>g[2].map(i=>({k:i[0],u:i[1],t:i[2]||'n',g:g[0]})));
 /* 你在試算表「健檢紀錄」分頁自己加的欄位,會自動出現在「其他項目」,不用改 APP */
 const CK_FIXED=['id','健檢日期','姓名','健檢醫院','方案費用','異常項目','備註'];
+/* 舊欄位名稱 → 新名稱(試算表舊欄位的資料會自動對應過來,不用搬) */
+const CK_ALIAS={'血小板':'血小板計數','中性球':'嗜中性白血球','嗜伊紅性球':'嗜伊紅性白血球','鹼性球':'嗜鹼性白血球','紅血球體積分布寬度':'紅血球分布寬度-變異數'};
 function refreshCK(){
-  const known=new Set([...CK_FIXED,...CK_BASE.flatMap(g=>g[2].map(i=>i[0]))]),ex={};
+  (DB['健檢紀錄']||[]).forEach(r=>Object.keys(CK_ALIAS).forEach(o=>{const n=CK_ALIAS[o];if(r[o]!==undefined&&r[o]!==''&&(r[n]===undefined||r[n]===''))r[n]=r[o]}));
+  const known=new Set([...Object.keys(CK_ALIAS),...CK_FIXED,...CK_BASE.flatMap(g=>g[2].map(i=>i[0]))]),ex={};
   (DB['健檢紀錄']||[]).forEach(r=>Object.keys(r).forEach(k=>{const kk=String(k).trim();if(!kk||known.has(kk)||/^__/.test(kk))return;const v=r[k];const o=ex[kk]=ex[kk]||{n:true,any:false};if(v!==''&&v!==undefined&&v!==null){o.any=true;if(typeof v!=='number'&&isNaN(parseFloat(v)))o.n=false;else if(typeof v!=='number')o.n=false}}));
   const items=Object.keys(ex).map(k=>[k,'',ex[k].any&&ex[k].n?'':'t']);
   CK=items.length?[...CK_BASE,['其他項目','other',items]]:CK_BASE;
@@ -439,9 +442,9 @@ function refreshCK(){
 }
 
 /* ============ 健檢標準值(一般成人參考,各院所略有不同,以報告上的標準為準) ============ */
-const REF={'平均心室率':[60,100],'右臂脈波傳導速度':[null,1400],'左臂脈波傳導速度':[null,1400],'右側踝臂血壓指數':[0.9,1.3],'左側踝臂血壓指數':[0.9,1.3],'紅血球體積分布寬度':[11.5,14.5],'全免疫球蛋白E定量':[null,100],'BMI':[18.5,24],'腰圍':{男:[null,90],女:[null,80]},'收縮壓':[90,129],'舒張壓':[60,79],'脈搏':[60,100],
+const REF={'平均心室率':[60,100],'右臂脈波傳導速度':[null,1400],'左臂脈波傳導速度':[null,1400],'右側踝臂血壓指數':[0.9,1.3],'左側踝臂血壓指數':[0.9,1.3],'紅血球分布寬度-變異數':[11.5,14.5],'紅血球分布寬度_標準差':[39,46],'有核紅血球':[null,0],'全免疫球蛋白E定量':[null,100],'BMI':[18.5,24],'腰圍':{男:[null,90],女:[null,80]},'收縮壓':[90,129],'舒張壓':[60,79],'脈搏':[60,100],
 '膽固醇':[null,200],'三酸甘油脂':[null,150],'高密度脂蛋白':{男:[40,null],女:[50,null]},'低密度脂蛋白':[null,130],
-'白血球':[4,10],'紅血球':{男:[4.5,5.9],女:[4,5.2]},'血小板':[150,400],'血紅素':{男:[13.5,17.5],女:[12,16]},'血球容積比':{男:[41,53],女:[36,46]},'平均紅血球容積':[80,100],'平均紅血球血色素濃度':[32,36],'平均紅血球血色素':[27,33],'中性球':[40,75],'嗜伊紅性球':[0,6],'鹼性球':[0,2],'淋巴球':[20,45],'單核球':[2,10],
+'白血球':[4,10],'紅血球':{男:[4.5,5.9],女:[4,5.2]},'血小板計數':[150,400],'血紅素':{男:[13.5,17.5],女:[12,16]},'血球容積比':{男:[41,53],女:[36,46]},'平均紅血球容積':[80,100],'平均紅血球血色素濃度':[32,36],'平均紅血球血色素':[27,33],'嗜中性白血球':[40,75],'嗜伊紅性白血球':[0,6],'嗜鹼性白血球':[0,2],'淋巴球':[20,45],'單核球':[2,10],
 '飯前血糖':[70,99],'醣化血色素':[4,5.6],'促甲狀腺素TSH':[0.4,4],
 '總膽紅素':[0.2,1.2],'直接膽紅素':[0,0.3],'總血清蛋白':[6,8.3],'白蛋白':[3.5,5.2],'球蛋白':[2,3.5],'肝功能AST':[null,40],'肝功能ALT':[null,40],'鹼性磷酸酶':[35,120],'r-GT':{男:[null,60],女:[null,40]},
 '尿素氮':[7,20],'肌酸酐':{男:[0.7,1.3],女:[0.5,1.1]},'腎絲球過濾率':[60,null],'尿酸':{男:[3.5,7.2],女:[2.6,6]},'酸鹼值':[5,8],'比重':[1.005,1.03],
@@ -512,9 +515,17 @@ async function pull(silent,light){
     DB=r.data;Object.values(SEC).forEach(s=>{DB[s.sheet]=DB[s.sheet]||[]});
     if(!(DB['選項']||[]).length){try{const rows=defaultRows();const z=await api('POST',{action:'initOptions',rows:rows.map(x=>[x['大項'],x['細項'],x['症狀'],x['選項']])});if(z&&z.ok)DB['選項']=rows}catch(e){}}
     SV('hr_db',DB);applyOptions();
+    if(!light)ckMetaSync();
     if(!silent)toast('已從 Sheet 載入');
     const ae=document.activeElement;if(!light||($('#modal').hidden&&!(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))))render();return true;
   }catch(e){lastErr=e.message;badge();if(!silent)toast('讀取失敗:'+e.message);return false}
+}
+let ckSent=false;
+function ckMetaSync(){
+  if(ckSent)return;ckSent=true;
+  const inv={};Object.keys(CK_ALIAS).forEach(o=>inv[CK_ALIAS[o]]=o);
+  const items=CK.flatMap(g=>g[2].map(i=>({g:g[0],k:i[0],u:i[1],t:i[2]==='t',en:EN[i[0]]||'',ref:REF[i[0]]||null,old:inv[i[0]]||''})));
+  api('POST',{action:'ckMeta',items}).catch(()=>{});
 }
 function badge(){
   const b=$('#sync');
