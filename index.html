@@ -134,6 +134,10 @@ details.grp[open]>summary{border-bottom:1px solid var(--line);background:var(--p
 .tbl th{background:#1d1b17;color:var(--pri);position:sticky;top:0}
 .tbl td:first-child,.tbl th:first-child{position:sticky;left:0;background:var(--card);font-weight:600}
 .tbl th:first-child{background:#1d1b17}
+.tbl tr.gr td:first-child{position:static}
+.tbl tr.gr .gl{position:sticky;left:12px;display:inline-block}
+.tbl td small{font-size:11px;color:var(--mut);font-weight:400}
+@media(max-width:759px){.tbl td:first-child,.tbl th:first-child{max-width:108px;min-width:88px;white-space:normal;padding:8px 6px 8px 10px;line-height:1.3;box-shadow:2px 0 0 var(--line)}.tbl td.ck .en{display:none}.tbl td:first-child .ic{display:none}}
 .tbl td.bad{color:var(--warn);font-weight:700}
 .tbl td.ck{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tbl td.ck .hl{padding:0 3px;margin:0 -3px;border-radius:3px;background-image:linear-gradient(transparent 50%,rgba(255,92,150,0) 50%);transition:background-image .2s;-webkit-box-decoration-break:clone;box-decoration-break:clone}
@@ -940,9 +944,9 @@ function drawCompare(){
       if(f.cg!==undefined&&f.cg!==''&&String(f.cg)!==String(gi))return;
       const rows=g[2].filter(i=>(!f.ci||(i[0]+' '+(EN[i[0]]||'')).toLowerCase().includes(f.ci.toLowerCase()))&&recs.some(r=>r[i[0]]!==undefined&&r[i[0]]!==''));
       if(!rows.length)return;
-      h+=`<tr class="gr"><td colspan="${recs.length+2}" style="color:${ICOL[g[1]]}">${ic(g[1],null,18)} ${L2(g[0])}</td></tr>`;
+      h+=`<tr class="gr"><td colspan="${recs.length+2}" style="color:${ICOL[g[1]]}"><span class="gl">${ic(g[1],null,18)} ${L2(g[0])}</span></td></tr>`;
       rows.forEach(i=>{
-        h+=`<tr><td class="ck ${f.item===i[0]?'sel':''}" data-act="ckitem" data-k="${esc(i[0])}"><span class="hl">${L2(i[0])}${i[1]?` <small style="color:var(--mut);font-weight:400">${i[1]}</small>`:''}</span></td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''} ${i[2]==='t'?'tt':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(i[2]==='t'?fmtMulti(x):x)}</td>`}).join('')+'</tr>';
+        h+=`<tr><td class="ck ${f.item===i[0]?'sel':''}" data-act="ckitem" data-k="${esc(i[0])}"><span class="hl">${L2(i[0])}</span></td><td style="color:var(--mut)">${esc(refText(i[0],sex))||'—'}${i[1]?` <small>${esc(i[1])}</small>`:''}</td>`+recs.map(r=>{const bad=ckBad(r,i[0],sex);const x=r[i[0]];return `<td class="${bad?'bad':''} ${i[2]==='t'?'tt':''}">${bad?ic('warn','#ff6b6b',14):''}${x===undefined||x===''?'—':esc(i[2]==='t'?fmtMulti(x):x)}</td>`}).join('')+'</tr>';
       });
     });
     h+='</table></div>';
