@@ -585,9 +585,9 @@ function drawList(key){
   if(f.from)a=a.filter(r=>(r[dk]||'')>=f.from);
   if(f.to)a=a.filter(r=>(r[dk]||'')<=f.to);
   if(s.hasPart){
-    const cnt={};a.forEach(r=>{const p=r['症狀部位大項']||'';cnt[p]=(cnt[p]||0)+1});
+    const cnt={};a.forEach(r=>{const bs=bigsOf(r);(bs.length?bs:['']).forEach(p=>{cnt[p]=(cnt[p]||0)+1})});
     $('#pf').innerHTML=`<button class="chip ${!f.part?'on':''}" data-act="part" data-p="">全部 <small>${a.length}</small></button>`+Object.keys(PARTS).map(p=>`<button class="chip pc ${f.part===p?'on':''}" style="--c:${pcol(p)}" data-act="part" data-p="${esc(p)}">${picon(p,18)}${p}${cnt[p]?` <small>${cnt[p]}</small>`:''}</button>`).join('');
-    if(f.part)a=a.filter(r=>r['症狀部位大項']===f.part);
+    if(f.part)a=a.filter(r=>bigsOf(r).includes(f.part));
   }
   a.sort((x,y)=>((y[dk]||'')+(y['時間']||'')).localeCompare((x[dk]||'')+(x['時間']||'')));
   const cb=$('#chartbox');if(cb)cb.innerHTML=chartHTML(key,a);
@@ -599,11 +599,14 @@ function drawList(key){
   }
   L.innerHTML=h;
 }
-const partTag=r=>{const p=r['症狀部位大項'];if(!p)return '';const c=pcol(p);const [sb,ex]=splitSub(p,r['症狀部位細項']);const bg=`color:${c};background:color-mix(in srgb,${c} 15%,transparent)`;
-  let more='';
-  if(ex){const e=p==='眼睛'?eyeParse(ex):null;
-    more=e?[['右',e[0]],['左',e[1]]].filter(x=>x[1]!=='').map(x=>`<span class="tag part eye" style="${bg}">${x[0]} ${esc(x[1])}</span>`).join(''):`<span class="tag part eye" style="${bg}">${esc(ex)}</span>`}
-  return `<span class="tag part" style="${bg}">${picon(p,16)}${esc(p)}${sb?' / '+esc(sb):''}</span>${more}`};
+const partTag=r=>{const bigs=bigsOf(r);if(!bigs.length)return '';
+  const [subs,ex]=splitMulti(bigs,r['症狀部位細項']);
+  const own=x=>bigs.find(b=>PARTS[b]&&PARTS[b].sub[x]!==undefined)||bigs[0];
+  let out=bigs.map(p=>{const c=pcol(p),bg=`color:${c};background:color-mix(in srgb,${c} 15%,transparent)`;const sb=subs.filter(x=>own(x)===p).join('、');
+    return `<span class="tag part" style="${bg}">${picon(p,16)}${esc(p)}${sb?' / '+esc(sb):''}</span>`}).join('');
+  if(ex){const p=bigs.includes('眼睛')?'眼睛':bigs[0],c=pcol(p),bg=`color:${c};background:color-mix(in srgb,${c} 15%,transparent)`;const e=p==='眼睛'?eyeParse(ex):null;
+    out+=e?[['右',e[0]],['左',e[1]]].filter(x=>x[1]!=='').map(x=>`<span class="tag part eye" style="${bg}">${x[0]} ${esc(x[1])}</span>`).join(''):`<span class="tag part eye" style="${bg}">${esc(ex)}</span>`}
+  return out};
 function typeTag(key){const c=ICOL[SEC[key].i]||'#d4b483';return `<span class="tag" style="color:${c};background:color-mix(in srgb,${c} 15%,transparent);font-weight:700">${ic(SEC[key].i,c,16)}${SEC[key].label}</span>`}
 function cardHTML(key,r,tagged){
   const s=SEC[key];let head='',body='';
@@ -714,7 +717,7 @@ function barPanel(key,title,rows,f,o){
   const idx={};keys.forEach((k,i)=>idx[k]=i);
   const cells=keys.map(k=>({label:o.months?k.slice(2).replace('-','/'):md(k),m:{}}));
   const grp=[],cnt={};let total=0,withData=new Set();
-  rows.forEach(r=>{const i=idx[kf(r)];if(i===undefined)return;const v=o.val(r);if(!v)return;const g=o.grp(r)||'未分類';if(!grp.includes(g))grp.push(g);cells[i].m[g]=(cells[i].m[g]||0)+v;total+=v;withData.add(i);(o.top?o.top(r):[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1})});
+  rows.forEach(r=>{const i=idx[kf(r)];if(i===undefined)return;const v=o.val(r);if(!v)return;let gs=[].concat(o.grp(r));gs=gs.length&&gs[0]?gs:['未分類'];gs.forEach(g=>{if(!grp.includes(g))grp.push(g);cells[i].m[g]=(cells[i].m[g]||0)+v});total+=v;withData.add(i);(o.top?o.top(r):[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1})});
   const rg=o.months?'':rgChips([['7','7天'],['14','14天'],['30','30天'],['90','90天']],String(f.rg||14));
   if(!total)return panel(key,title,rg,nodata('這段期間還沒有資料'));
   const segs=cells.map(c=>({label:c.label,segs:grp.map((g,i)=>({n:g,v:c.m[g]||0,c:o.gcol(g,i)})).filter(x=>x.v>0)}));
@@ -729,9 +732,9 @@ function chartHTML(key,rows){
   if(key==='vitals')return vitalsChart(rows,f);
   if(key==='diet'){const C=(t,k,u,un)=>barPanel(key,t,rows,f,{val:r=>numOf(r[k]),grp:r=>r['姓名'],gcol:(n,i)=>PAL[i%PAL.length],unit:un,stat:(a,d,g)=>g===1?`平均 ${nf(a/d)} ${u}/天(有記錄的 ${d} 天)`:`區間合計 ${nf(a)} ${u}`});
     return C('每日飲水 ml','飲水','ml',' ml')+C('每日睡眠時數','睡眠時數','小時',' 小時')+C('每日運動分鐘','運動分鐘','分鐘',' 分')}
-  if(key==='meds')return barPanel(key,'每日用藥次數',rows,f,{val:()=>1,grp:r=>r['症狀部位大項'],gcol:n=>pcol(n),unit:' 次',alwaysLegend:1,top:r=>r['藥品']?[r['藥品']]:[],stat:t=>`區間共用藥 ${t} 次`});
-  if(key==='symptoms')return barPanel(key,'每日症狀紀錄數',rows,f,{val:()=>1,grp:r=>r['症狀部位大項'],gcol:n=>pcol(n),unit:' 筆',alwaysLegend:1,top:r=>String(r['症狀']||'').split('、').filter(Boolean).map(e=>parseSym(e)[0]),stat:(t,d)=>`區間共 ${t} 筆,${d} 天有症狀`});
-  if(key==='visits')return barPanel(key,'每月就診次數(近 12 個月)',rows,f,{months:1,val:()=>1,grp:r=>r['症狀部位大項'],gcol:n=>pcol(n),unit:' 次',alwaysLegend:1,top:r=>r['醫院名稱']?[r['醫院名稱']]:[],stat:t=>`近 12 個月就診 ${t} 次`});
+  if(key==='meds')return barPanel(key,'每日用藥次數',rows,f,{val:()=>1,grp:r=>bigsOf(r),gcol:n=>pcol(n),unit:' 次',alwaysLegend:1,top:r=>r['藥品']?[r['藥品']]:[],stat:t=>`區間共用藥 ${t} 次`});
+  if(key==='symptoms')return barPanel(key,'每日症狀紀錄數',rows,f,{val:()=>1,grp:r=>bigsOf(r),gcol:n=>pcol(n),unit:' 筆',alwaysLegend:1,top:r=>String(r['症狀']||'').split('、').filter(Boolean).map(e=>parseSym(e)[0]),stat:(t,d)=>`區間共 ${t} 筆,${d} 天有症狀`});
+  if(key==='visits')return barPanel(key,'每月就診次數(近 12 個月)',rows,f,{months:1,val:()=>1,grp:r=>bigsOf(r),gcol:n=>pcol(n),unit:' 次',alwaysLegend:1,top:r=>r['醫院名稱']?[r['醫院名稱']]:[],stat:t=>`近 12 個月就診 ${t} 次`});
   return '';
 }
 function ckChart(whos,f){
@@ -754,25 +757,23 @@ function latestOf(sheet,person,k){
 function bmi(h,w){h=Number(h);w=Number(w);return h>0&&w>0?Math.round(w/Math.pow(h/100,2)*10)/10:''}
 
 /* 細項可以附補充文字,例如「右眼 50/0」:空白前是細項,後面是補充(度數、說明) */
-function splitSub(big,sub){
+const bigsOf=r=>String(r&&r['症狀部位大項']||'').split('、').map(x=>x.trim()).filter(Boolean);
+/* 大項、細項都可複選:大項「耳鼻喉、肺 | 呼吸」,細項「鼻腔、喉嚨、氣管 補充說明」 */
+function splitMulti(bigs,sub){
   sub=String(sub||'').trim();
-  const subs=(PARTS[big]&&Object.keys(PARTS[big].sub))||[];
-  if(sub.includes('、')){   /* 細項可複選:「鼻腔、喉嚨 補充說明」 */
-    const got=[];let rest=sub;
-    for(;;){
-      const hit=subs.filter(x=>rest===x||rest.startsWith(x+'、')||rest.startsWith(x+' ')||rest.startsWith(x+'　')).sort((a,b)=>b.length-a.length)[0];
-      if(!hit)break;
-      got.push(hit);
-      if(rest.startsWith(hit+'、')){rest=rest.slice(hit.length+1);continue}
-      rest=rest.slice(hit.length).trim();break;
-    }
-    if(got.length>1||(got.length&&rest===''))return [got.join('、'),rest];
+  const cand=[];bigs.forEach(b=>Object.keys((PARTS[b]&&PARTS[b].sub)||{}).forEach(x=>cand.push(x)));
+  const got=[];let rest=sub;
+  for(;;){
+    const hit=cand.filter(x=>rest===x||rest.startsWith(x+'、')||rest.startsWith(x+' ')||rest.startsWith(x+'　')).sort((a,b)=>b.length-a.length)[0];
+    if(!hit)break;
+    got.push(hit);
+    if(rest.startsWith(hit+'、')){rest=rest.slice(hit.length+1);continue}
+    rest=rest.slice(hit.length).trim();break;
   }
-  if(subs.includes(sub))return [sub,''];
-  const hit=subs.filter(x=>sub.startsWith(x+' ')||sub.startsWith(x+'　')).sort((a,b)=>b.length-a.length)[0];
-  if(hit)return [hit,sub.slice(hit.length).trim()];
-  return [sub,''];
+  if(got.length)return [got,rest];
+  return [sub?[sub]:[],''];
 }
+function splitSub(big,sub){const [g,r]=splitMulti(String(big||'').split('、').filter(Boolean),sub);return [g.join('、'),r]}
 const eyeParse=t=>{const m=String(t||'').trim().match(/^(?:右\s*([^\s左]*))?\s*(?:左\s*(\S*))?$/);return m&&(m[1]!==undefined||m[2]!==undefined)?[m[1]||'',m[2]||'']:null};
 function openForm(key,row,mode='new'){
   if(key==='checkup')return openCheckup(row,mode);
@@ -786,7 +787,7 @@ function openForm(key,row,mode='new'){
   for(const f of s.fields){
     if(f.g){h+=`<div class="gh full">${L2(f.g)}</div>`;continue}
     if(f.t==='part'){
-      h+=`<div class="fld full"><label>症狀部位:先選大項,再選細項(細項可以複選)</label><div class="chips" id="pp"></div><div class="chips" id="pd" style="margin-top:8px"></div><input type="hidden" name="症狀部位大項" value="${esc(val('症狀部位大項'))}"><input type="hidden" name="症狀部位細項" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[0])}"><div id="pxw" style="margin-top:8px"><div id="pxe" hidden><label style="display:block;color:var(--mut);margin-bottom:4px">眼睛度數 <small style="color:var(--pri)">選填,例如 右 0、左 50</small></label><div class="eyes"><div class="eyef"><b>右</b><input type="text" id="pxr" placeholder="0" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[0])}"></div><div class="eyef"><b>左</b><input type="text" id="pxl" placeholder="50" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[1])}"></div></div></div><div id="pxo"><label style="display:block;color:var(--mut);margin-bottom:4px">細項補充 <small style="color:var(--pri)">選填</small></label><input type="text" id="px" placeholder="補充說明,例如 左邊、位置" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])}"></div></div></div>`;continue}
+      h+=`<div class="fld full"><label>症狀部位:大項、細項都可以複選</label><div class="chips" id="pp"></div><div class="chips" id="pd" style="margin-top:8px"></div><input type="hidden" name="症狀部位大項" value="${esc(val('症狀部位大項'))}"><input type="hidden" name="症狀部位細項" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[0])}"><div id="pxw" style="margin-top:8px"><div id="pxe" hidden><label style="display:block;color:var(--mut);margin-bottom:4px">眼睛度數 <small style="color:var(--pri)">選填,例如 右 0、左 50</small></label><div class="eyes"><div class="eyef"><b>右</b><input type="text" id="pxr" placeholder="0" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[0])}"></div><div class="eyef"><b>左</b><input type="text" id="pxl" placeholder="50" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[1])}"></div></div></div><div id="pxo"><label style="display:block;color:var(--mut);margin-bottom:4px">細項補充 <small style="color:var(--pri)">選填</small></label><input type="text" id="px" placeholder="補充說明,例如 左邊、位置" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])}"></div></div></div>`;continue}
     if(f.t==='chips'){
       h+=`<div class="fld full"><label>症狀與程度(點選程度即勾選,再點一次取消)</label><div id="syms"></div></div>`;continue}
     let v=val(f.k);
@@ -808,16 +809,20 @@ function openForm(key,row,mode='new'){
   if(s.hasPart){
     const H1=F.elements['症狀部位大項'],H2=F.elements['症狀部位細項'];
     let toothOpen=false,toothMode='恆牙',toothN='換牙';
+    const bigsel=()=>H1.value?H1.value.split('、').filter(Boolean):[];
     const subsel=()=>H2.value?H2.value.split('、').filter(Boolean):[];
-    const subFor=n=>{const ss=subsel(),P=PARTS[H1.value];return ss.find(x=>P&&(P.sub[x]||[]).includes(n))||ss[0]||''};
+    const bigOf=x=>bigsel().find(b=>PARTS[b]&&PARTS[b].sub[x]!==undefined)||bigsel()[0]||'';
+    const subFor=n=>{const ss=subsel();return ss.find(x=>{const P=PARTS[bigOf(x)];return P&&(P.sub[x]||[]).includes(n)})||ss[0]||''};
+    const symsOf=x=>(PARTS[bigOf(x)]&&PARTS[bigOf(x)].sub[x])||[];
+    const sortSel=()=>{const ord=[];Object.keys(PARTS).forEach(b=>Object.keys(PARTS[b].sub).forEach(x=>ord.push(b+'|'+x)));const bs=bigsel();H1.value=Object.keys(PARTS).filter(b=>bs.includes(b)).join('、');const ss=subsel();ss.sort((a,b)=>ord.indexOf(bigOf(a)+'|'+a)-ord.indexOf(bigOf(b)+'|'+b));H2.value=ss.join('、')};
     const drawSyms=()=>{
       const box=$('#syms');if(!box)return;
-      const P=PARTS[H1.value],ss=subsel(),seen=new Set(),groups=[];
-      ss.forEach(x=>{const nm=((P&&P.sub[x])||[]).filter(n=>!seen.has(n));nm.forEach(n=>seen.add(n));groups.push([x,nm])});
+      const ss=subsel(),seen=new Set(),groups=[];
+      ss.forEach(x=>{const nm=symsOf(x).filter(n=>!seen.has(n));nm.forEach(n=>seen.add(n));groups.push([bigsel().length>1?bigOf(x)+' / '+x:x,nm])});
       const orph=Object.keys(sel).filter(k=>!seen.has(k));if(orph.length)groups.push(['',orph]);
       if(!groups.some(g=>g[1].length)){box.innerHTML=`<div class="note">${ss.length?'這個細項沒有預設症狀,請在「其他說明」填寫':'請先選上面的部位大項與細項'}</div>`;return}
       const renderSym=n=>{
-        const sp=specOf(H1.value,subFor(n),n);
+        const sp=specOf(bigOf(subFor(n)),subFor(n),n);
         const D=sp.t==='deep'?sp.lv:sp.t==='tooth'?TOOTH:null;
         if(D){
           const cur=(sel[n]||'').split('/');
@@ -832,24 +837,27 @@ function openForm(key,row,mode='new'){
       box.innerHTML=groups.filter(g=>g[1].length).map(g=>(ss.length>1&&g[0]?`<div class="note" style="margin:10px 0 2px;color:var(--pri)">${esc(g[0])}</div>`:'')+g[1].map(renderSym).join('')).join('');
     };
     const drawParts=()=>{
-      $('#pp').innerHTML=Object.keys(PARTS).map(p=>`<button type="button" class="chip pc ${H1.value===p?'on':''}" style="--c:${pcol(p)}" data-p1="${esc(p)}">${picon(p,18)}${p}</button>`).join('');
-      const subs=H1.value&&PARTS[H1.value]?Object.keys(PARTS[H1.value].sub):[];
-      $('#pd').innerHTML=subs.map(x=>`<button type="button" class="chip pc ${subsel().includes(x)?'on':''}" style="--c:${pcol(H1.value)}" data-p2="${esc(x)}">${x}</button>`).join('');
+      const bs=bigsel(),ss=subsel();
+      $('#pp').innerHTML=Object.keys(PARTS).map(p=>`<button type="button" class="chip pc ${bs.includes(p)?'on':''}" style="--c:${pcol(p)}" data-p1="${esc(p)}">${picon(p,18)}${p}</button>`).join('');
+      $('#pd').innerHTML=bs.map(b=>{const subs=Object.keys((PARTS[b]&&PARTS[b].sub)||{});
+        return (bs.length>1?`<div class="note" style="flex-basis:100%;margin:6px 0 0;color:${pcol(b)}">${esc(b)}</div>`:'')+subs.map(x=>`<button type="button" class="chip pc ${ss.includes(x)&&bigOf(x)===b?'on':''}" style="--c:${pcol(b)}" data-p2="${esc(x)}" data-pb="${esc(b)}">${x}</button>`).join('')}).join('');
     };
     const PX=$('#px');
-    const eyeMode=()=>H1.value==='眼睛'&&(!PX.value.trim()||eyeParse(PX.value));
+    const eyeMode=()=>bigsel().includes('眼睛')&&(!PX.value.trim()||eyeParse(PX.value));
     const pxHint=()=>{const eye=eyeMode();$('#pxe').hidden=!eye;$('#pxo').hidden=eye;if(eye&&PX.value.trim()&&!$('#pxr').value&&!$('#pxl').value){const e=eyeParse(PX.value);$('#pxr').value=e[0];$('#pxl').value=e[1]}if(eye)PX.value=''};
     drawParts();drawSyms();pxHint();
     F.addEventListener('click',e=>{
       const a=e.target.closest('[data-p1]'),c=e.target.closest('[data-p2]'),o=e.target.closest('[data-s]'),tt=e.target.closest('[data-tt]'),tb=e.target.closest('[data-tb]'),tm=e.target.closest('[data-tm]');
-      if(a){if(H1.value!==a.dataset.p1){H1.value=a.dataset.p1;H2.value='';sel={};const subs=Object.keys(PARTS[H1.value].sub);if(subs.length===1)H2.value=subs[0]}drawParts();drawSyms();pxHint()}
-      else if(c){const x=c.dataset.p2,cur=subsel(),i=cur.indexOf(x);
-        if(i>=0){cur.splice(i,1);const keep=new Set(cur.flatMap(y=>PARTS[H1.value].sub[y]||[]));(PARTS[H1.value].sub[x]||[]).forEach(n=>{if(!keep.has(n))delete sel[n]})}
-        else cur.push(x);
-        const order=Object.keys(PARTS[H1.value].sub);cur.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
-        H2.value=cur.join('、');drawParts();drawSyms()}
+      if(a){const bg=a.dataset.p1,bs=bigsel(),i=bs.indexOf(bg);
+        if(i>=0){bs.splice(i,1);const gone=Object.keys(PARTS[bg].sub);const left=subsel().filter(x=>!gone.includes(x));const keep=new Set(left.flatMap(x=>{const P=bs.map(b=>PARTS[b]).find(P=>P&&P.sub[x]);return P?P.sub[x]:[]}));gone.forEach(x=>(PARTS[bg].sub[x]||[]).forEach(n=>{if(!keep.has(n))delete sel[n]}));H1.value=bs.join('、');H2.value=left.join('、')}
+        else{bs.push(bg);H1.value=bs.join('、');const subs=Object.keys(PARTS[bg].sub);if(subs.length===1)H2.value=subsel().concat(subs).join('、')}
+        sortSel();drawParts();drawSyms();pxHint()}
+      else if(c){const x=c.dataset.p2,bg=c.dataset.pb,cur=subsel(),i=cur.indexOf(x);
+        if(i>=0){cur.splice(i,1);H2.value=cur.join('、');const keep=new Set(cur.flatMap(symsOf));(PARTS[bg].sub[x]||[]).forEach(n=>{if(!keep.has(n))delete sel[n]})}
+        else{cur.push(x);H2.value=cur.join('、')}
+        sortSel();drawParts();drawSyms()}
       else if(o){const n=o.dataset.s,v=o.dataset.o;
-        if(o.dataset.lv!==undefined){const sp=specOf(H1.value,subFor(n),n),D=sp.t==='deep'?sp.lv:TOOTH,cur=(sel[n]||'').split('/');while(cur.length<D.length)cur.push('');const li=+o.dataset.lv;cur[li]=cur[li]===v?'':v;for(let q=li+1;q<D.length;q++)if(typeof D[q][1]==='function')cur[q]='';const j=cur.join('/');if(/^\/*$/.test(j))delete sel[n];else sel[n]=j.replace(/\/+$/,'')}
+        if(o.dataset.lv!==undefined){const sp=specOf(bigOf(subFor(n)),subFor(n),n),D=sp.t==='deep'?sp.lv:TOOTH,cur=(sel[n]||'').split('/');while(cur.length<D.length)cur.push('');const li=+o.dataset.lv;cur[li]=cur[li]===v?'':v;for(let q=li+1;q<D.length;q++)if(typeof D[q][1]==='function')cur[q]='';const j=cur.join('/');if(/^\/*$/.test(j))delete sel[n];else sel[n]=j.replace(/\/+$/,'')}
         else if(sel[n]===v)delete sel[n];else sel[n]=v;
         drawSyms()}
       else if(tb){toothOpen=!toothOpen;drawSyms()}
