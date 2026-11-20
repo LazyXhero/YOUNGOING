@@ -671,6 +671,8 @@ function lineSVG(series){
   series.forEach(s=>{
     const pts=s.pts.map(p=>sx(p.x).toFixed(1)+','+sy(p.y).toFixed(1)).join(' ');
     if(s.pts.length>1)g+=`<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+    let lastX=-1e9;const endX=sx(s.pts[s.pts.length-1].x);
+    s.pts.forEach((p,pi)=>{const px=sx(p.x);if(pi<s.pts.length-1&&px-lastX>=30&&endX-px>=30){lastX=px;g+=`<text x="${px.toFixed(1)}" y="${(sy(p.y)-8).toFixed(1)}" text-anchor="middle" fill="${s.color}" font-size="10" opacity=".85">${nf(p.y)}</text>`}});
     s.pts.forEach(p=>{g+=`<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="3.6" fill="${s.color}" stroke="${s.color}" stroke-width="1"><title>${esc(s.name)} ${md(p.d)} : ${nf(p.y)}</title></circle>`});
     const l=s.pts[s.pts.length-1];
     g+=`<text x="${(sx(l.x)+8).toFixed(1)}" y="${(sy(l.y)+4).toFixed(1)}" text-anchor="start" fill="${s.color}" font-size="${FS}" font-weight="700">${nf(l.y)}</text>`;
@@ -683,12 +685,12 @@ function barSVG(cells,unit){
   let mx=Math.ceil(Math.max(1,...cells.map(tot)));
   const ticks=mx<=4?[...Array(mx+1).keys()]:[0,mx/2,mx];
   const bw=(W-L-R)/n,w=Math.max(2.5,Math.min(bw*.36,8)),every=Math.max(1,Math.ceil(n*44/(W-L-R)));
-  let g='';
+  let g='';cells._lx=undefined;
   ticks.forEach(v=>{const y=T+(1-v/mx)*(H-T-B);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#27272b"/><text x="${L-5}" y="${y+4}" text-anchor="end" fill="#8d8a84" font-size="${FS}">${nf(v)}</text>`});
   cells.forEach((c,i)=>{
     let y=H-B;const x=L+i*bw+(bw-w)/2;
     c.segs.forEach(sg=>{const h=sg.v/mx*(H-T-B);y-=h;g+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(h,1).toFixed(1)}" rx="2" fill="${sg.c}"><title>${c.label} ${esc(sg.n)} ${nf(sg.v)}${unit||''}</title></rect>`});
-    const tv=tot(c);if(tv>0&&bw>=15){const ty=H-B-tv/mx*(H-T-B)-3;g+=`<text x="${(x+w/2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" fill="#d9d5cc" font-size="10">${nf(Math.round(tv*10)/10)}</text>`}
+    const tv=tot(c),bx=L+i*bw+bw/2;if(tv>0&&(bx-(cells._lx===undefined?-1e9:cells._lx)>=26)){cells._lx=bx;const ty=H-B-tv/mx*(H-T-B)-3;g+=`<text x="${(x+w/2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" fill="#d9d5cc" font-size="10">${nf(Math.round(tv*10)/10)}</text>`}
     if((n-1-i)%every===0)g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle" fill="#8d8a84" font-size="${FS}">${c.label}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`;
