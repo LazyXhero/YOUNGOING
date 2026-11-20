@@ -757,6 +757,17 @@ function bmi(h,w){h=Number(h);w=Number(w);return h>0&&w>0?Math.round(w/Math.pow(
 function splitSub(big,sub){
   sub=String(sub||'').trim();
   const subs=(PARTS[big]&&Object.keys(PARTS[big].sub))||[];
+  if(sub.includes('、')){   /* 細項可複選:「鼻腔、喉嚨 補充說明」 */
+    const got=[];let rest=sub;
+    for(;;){
+      const hit=subs.filter(x=>rest===x||rest.startsWith(x+'、')||rest.startsWith(x+' ')||rest.startsWith(x+'　')).sort((a,b)=>b.length-a.length)[0];
+      if(!hit)break;
+      got.push(hit);
+      if(rest.startsWith(hit+'、')){rest=rest.slice(hit.length+1);continue}
+      rest=rest.slice(hit.length).trim();break;
+    }
+    if(got.length>1||(got.length&&rest===''))return [got.join('、'),rest];
+  }
   if(subs.includes(sub))return [sub,''];
   const hit=subs.filter(x=>sub.startsWith(x+' ')||sub.startsWith(x+'　')).sort((a,b)=>b.length-a.length)[0];
   if(hit)return [hit,sub.slice(hit.length).trim()];
@@ -775,7 +786,7 @@ function openForm(key,row,mode='new'){
   for(const f of s.fields){
     if(f.g){h+=`<div class="gh full">${L2(f.g)}</div>`;continue}
     if(f.t==='part'){
-      h+=`<div class="fld full"><label>症狀部位:先選大項,再選細項</label><div class="chips" id="pp"></div><div class="chips" id="pd" style="margin-top:8px"></div><input type="hidden" name="症狀部位大項" value="${esc(val('症狀部位大項'))}"><input type="hidden" name="症狀部位細項" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[0])}"><div id="pxw" style="margin-top:8px"><div id="pxe" hidden><label style="display:block;color:var(--mut);margin-bottom:4px">眼睛度數 <small style="color:var(--pri)">選填,例如 右 0、左 50</small></label><div class="eyes"><div class="eyef"><b>右</b><input type="text" id="pxr" placeholder="0" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[0])}"></div><div class="eyef"><b>左</b><input type="text" id="pxl" placeholder="50" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[1])}"></div></div></div><div id="pxo"><label style="display:block;color:var(--mut);margin-bottom:4px">細項補充 <small style="color:var(--pri)">選填</small></label><input type="text" id="px" placeholder="補充說明,例如 左邊、位置" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])}"></div></div></div>`;continue}
+      h+=`<div class="fld full"><label>症狀部位:先選大項,再選細項(細項可以複選)</label><div class="chips" id="pp"></div><div class="chips" id="pd" style="margin-top:8px"></div><input type="hidden" name="症狀部位大項" value="${esc(val('症狀部位大項'))}"><input type="hidden" name="症狀部位細項" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[0])}"><div id="pxw" style="margin-top:8px"><div id="pxe" hidden><label style="display:block;color:var(--mut);margin-bottom:4px">眼睛度數 <small style="color:var(--pri)">選填,例如 右 0、左 50</small></label><div class="eyes"><div class="eyef"><b>右</b><input type="text" id="pxr" placeholder="0" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[0])}"></div><div class="eyef"><b>左</b><input type="text" id="pxl" placeholder="50" value="${esc((eyeParse(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])||['',''])[1])}"></div></div></div><div id="pxo"><label style="display:block;color:var(--mut);margin-bottom:4px">細項補充 <small style="color:var(--pri)">選填</small></label><input type="text" id="px" placeholder="補充說明,例如 左邊、位置" value="${esc(splitSub(val('症狀部位大項'),val('症狀部位細項'))[1])}"></div></div></div>`;continue}
     if(f.t==='chips'){
       h+=`<div class="fld full"><label>症狀與程度(點選程度即勾選,再點一次取消)</label><div id="syms"></div></div>`;continue}
     let v=val(f.k);
@@ -797,13 +808,16 @@ function openForm(key,row,mode='new'){
   if(s.hasPart){
     const H1=F.elements['症狀部位大項'],H2=F.elements['症狀部位細項'];
     let toothOpen=false,toothMode='恆牙',toothN='換牙';
+    const subsel=()=>H2.value?H2.value.split('、').filter(Boolean):[];
+    const subFor=n=>{const ss=subsel(),P=PARTS[H1.value];return ss.find(x=>P&&(P.sub[x]||[]).includes(n))||ss[0]||''};
     const drawSyms=()=>{
       const box=$('#syms');if(!box)return;
-      const base=(PARTS[H1.value]&&PARTS[H1.value].sub[H2.value])||[];
-      const list=[...base,...Object.keys(sel).filter(k=>!base.includes(k))];
-      if(!list.length){box.innerHTML=`<div class="note">${H2.value?'這個細項沒有預設症狀,請在「其他說明」填寫':'請先選上面的部位大項與細項'}</div>`;return}
-      box.innerHTML=list.map(n=>{
-        const sp=specOf(H1.value,H2.value,n);
+      const P=PARTS[H1.value],ss=subsel(),seen=new Set(),groups=[];
+      ss.forEach(x=>{const nm=((P&&P.sub[x])||[]).filter(n=>!seen.has(n));nm.forEach(n=>seen.add(n));groups.push([x,nm])});
+      const orph=Object.keys(sel).filter(k=>!seen.has(k));if(orph.length)groups.push(['',orph]);
+      if(!groups.some(g=>g[1].length)){box.innerHTML=`<div class="note">${ss.length?'這個細項沒有預設症狀,請在「其他說明」填寫':'請先選上面的部位大項與細項'}</div>`;return}
+      const renderSym=n=>{
+        const sp=specOf(H1.value,subFor(n),n);
         const D=sp.t==='deep'?sp.lv:sp.t==='tooth'?TOOTH:null;
         if(D){
           const cur=(sel[n]||'').split('/');
@@ -814,12 +828,13 @@ function openForm(key,row,mode='new'){
         }
         const opts=sp.o;
         return `<div class="sx"><div class="sn">${esc(n)}</div><div class="so">${opts.map((o,i)=>`<button type="button" class="opt ${sel[n]===o?'on':''}" style="--c:${optColor(i,opts.length)}" data-s="${esc(n)}" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>`;
-      }).join('');
+      };
+      box.innerHTML=groups.filter(g=>g[1].length).map(g=>(ss.length>1&&g[0]?`<div class="note" style="margin:10px 0 2px;color:var(--pri)">${esc(g[0])}</div>`:'')+g[1].map(renderSym).join('')).join('');
     };
     const drawParts=()=>{
       $('#pp').innerHTML=Object.keys(PARTS).map(p=>`<button type="button" class="chip pc ${H1.value===p?'on':''}" style="--c:${pcol(p)}" data-p1="${esc(p)}">${picon(p,18)}${p}</button>`).join('');
       const subs=H1.value&&PARTS[H1.value]?Object.keys(PARTS[H1.value].sub):[];
-      $('#pd').innerHTML=subs.map(x=>`<button type="button" class="chip pc ${H2.value===x?'on':''}" style="--c:${pcol(H1.value)}" data-p2="${esc(x)}">${x}</button>`).join('');
+      $('#pd').innerHTML=subs.map(x=>`<button type="button" class="chip pc ${subsel().includes(x)?'on':''}" style="--c:${pcol(H1.value)}" data-p2="${esc(x)}">${x}</button>`).join('');
     };
     const PX=$('#px');
     const eyeMode=()=>H1.value==='眼睛'&&(!PX.value.trim()||eyeParse(PX.value));
@@ -828,9 +843,13 @@ function openForm(key,row,mode='new'){
     F.addEventListener('click',e=>{
       const a=e.target.closest('[data-p1]'),c=e.target.closest('[data-p2]'),o=e.target.closest('[data-s]'),tt=e.target.closest('[data-tt]'),tb=e.target.closest('[data-tb]'),tm=e.target.closest('[data-tm]');
       if(a){if(H1.value!==a.dataset.p1){H1.value=a.dataset.p1;H2.value='';sel={};const subs=Object.keys(PARTS[H1.value].sub);if(subs.length===1)H2.value=subs[0]}drawParts();drawSyms();pxHint()}
-      else if(c){if(H2.value!==c.dataset.p2){H2.value=c.dataset.p2;sel={}}drawParts();drawSyms()}
+      else if(c){const x=c.dataset.p2,cur=subsel(),i=cur.indexOf(x);
+        if(i>=0){cur.splice(i,1);const keep=new Set(cur.flatMap(y=>PARTS[H1.value].sub[y]||[]));(PARTS[H1.value].sub[x]||[]).forEach(n=>{if(!keep.has(n))delete sel[n]})}
+        else cur.push(x);
+        const order=Object.keys(PARTS[H1.value].sub);cur.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+        H2.value=cur.join('、');drawParts();drawSyms()}
       else if(o){const n=o.dataset.s,v=o.dataset.o;
-        if(o.dataset.lv!==undefined){const sp=specOf(H1.value,H2.value,n),D=sp.t==='deep'?sp.lv:TOOTH,cur=(sel[n]||'').split('/');while(cur.length<D.length)cur.push('');const li=+o.dataset.lv;cur[li]=cur[li]===v?'':v;for(let q=li+1;q<D.length;q++)if(typeof D[q][1]==='function')cur[q]='';const j=cur.join('/');if(/^\/*$/.test(j))delete sel[n];else sel[n]=j.replace(/\/+$/,'')}
+        if(o.dataset.lv!==undefined){const sp=specOf(H1.value,subFor(n),n),D=sp.t==='deep'?sp.lv:TOOTH,cur=(sel[n]||'').split('/');while(cur.length<D.length)cur.push('');const li=+o.dataset.lv;cur[li]=cur[li]===v?'':v;for(let q=li+1;q<D.length;q++)if(typeof D[q][1]==='function')cur[q]='';const j=cur.join('/');if(/^\/*$/.test(j))delete sel[n];else sel[n]=j.replace(/\/+$/,'')}
         else if(sel[n]===v)delete sel[n];else sel[n]=v;
         drawSyms()}
       else if(tb){toothOpen=!toothOpen;drawSyms()}
