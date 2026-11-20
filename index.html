@@ -682,12 +682,13 @@ function barSVG(cells,unit){
   const tot=c=>c.segs.reduce((a,s)=>a+s.v,0);
   let mx=Math.ceil(Math.max(1,...cells.map(tot)));
   const ticks=mx<=4?[...Array(mx+1).keys()]:[0,mx/2,mx];
-  const bw=(W-L-R)/n,w=Math.max(3,Math.min(bw*.5,12)),every=Math.max(1,Math.ceil(n*44/(W-L-R)));
+  const bw=(W-L-R)/n,w=Math.max(2.5,Math.min(bw*.36,8)),every=Math.max(1,Math.ceil(n*44/(W-L-R)));
   let g='';
   ticks.forEach(v=>{const y=T+(1-v/mx)*(H-T-B);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#27272b"/><text x="${L-5}" y="${y+4}" text-anchor="end" fill="#8d8a84" font-size="${FS}">${nf(v)}</text>`});
   cells.forEach((c,i)=>{
     let y=H-B;const x=L+i*bw+(bw-w)/2;
     c.segs.forEach(sg=>{const h=sg.v/mx*(H-T-B);y-=h;g+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(h,1).toFixed(1)}" rx="2" fill="${sg.c}"><title>${c.label} ${esc(sg.n)} ${nf(sg.v)}${unit||''}</title></rect>`});
+    const tv=tot(c);if(tv>0&&bw>=15){const ty=H-B-tv/mx*(H-T-B)-3;g+=`<text x="${(x+w/2).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" fill="#d9d5cc" font-size="10">${nf(Math.round(tv*10)/10)}</text>`}
     if((n-1-i)%every===0)g+=`<text x="${(x+w/2).toFixed(1)}" y="${H-6}" text-anchor="middle" fill="#8d8a84" font-size="${FS}">${c.label}</text>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${g}</svg>`;
@@ -710,31 +711,42 @@ function vitalsChart(rows,f){
   return panel('vitals','數值趨勢',rgChips([['30','30天'],['90','90天'],['365','1年'],['all','全部']],rg),body);
 }
 function barPanel(key,title,rows,f,o){
+  const all=String(f.rg)==='all';
+  const dates=rows.filter(r=>r['日期']&&o.val(r)).map(r=>String(r['日期'])).sort();
+  const first=dates[0]||TODAY();
+  const span=Math.round(dayN(TODAY())-dayN(first))+1;
+  const monthly=!!o.months||(all&&span>90);   /* 全部 超過 90 天時,改用月份統計,圖才看得清楚 */
   let keys=[];
-  if(o.months){const d=new Date();for(let i=11;i>=0;i--){const t=new Date(d.getFullYear(),d.getMonth()-i,1);keys.push(t.getFullYear()+'-'+p2(t.getMonth()+1))}}
-  else{const n=Number(f.rg||14);for(let i=n-1;i>=0;i--)keys.push(addDays(-i))}
-  const kf=o.months?r=>String(r['日期']||'').slice(0,7):r=>r['日期'];
+  if(monthly){
+    const d=new Date();let n=12;
+    if(all){const a=first.split('-');n=Math.min(72,(d.getFullYear()-Number(a[0]))*12+d.getMonth()+1-Number(a[1])+1);n=Math.max(n,2)}
+    for(let i=n-1;i>=0;i--){const t=new Date(d.getFullYear(),d.getMonth()-i,1);keys.push(t.getFullYear()+'-'+p2(t.getMonth()+1))}
+  }
+  else{const n=all?Math.max(7,span):Number(f.rg||14);for(let i=n-1;i>=0;i--)keys.push(addDays(-i))}
+  const kf=monthly?r=>String(r['日期']||'').slice(0,7):r=>r['日期'];
   const idx={};keys.forEach((k,i)=>idx[k]=i);
-  const cells=keys.map(k=>({label:o.months?k.slice(2).replace('-','/'):md(k),m:{}}));
-  const grp=[],cnt={};let total=0,withData=new Set();
-  rows.forEach(r=>{const i=idx[kf(r)];if(i===undefined)return;const v=o.val(r);if(!v)return;let gs=[].concat(o.grp(r));gs=gs.length&&gs[0]?gs:['未分類'];gs.forEach(g=>{if(!grp.includes(g))grp.push(g);cells[i].m[g]=(cells[i].m[g]||0)+v});total+=v;withData.add(i);(o.top?o.top(r):[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1})});
-  const rg=o.months?'':rgChips([['7','7天'],['14','14天'],['30','30天'],['90','90天']],String(f.rg||14));
-  if(!total)return panel(key,title,rg,nodata('這段期間還沒有資料'));
+  const cells=keys.map(k=>({label:monthly?k.slice(2).replace('-','/'):md(k),m:{},dn:{}}));
+  const grp=[],cnt={},days=new Set();let total=0;
+  rows.forEach(r=>{const i=idx[kf(r)];if(i===undefined)return;const v=o.val(r);if(!v)return;let gs=[].concat(o.grp(r));gs=gs.length&&gs[0]?gs:['未分類'];gs.forEach(g=>{if(!grp.includes(g))grp.push(g);cells[i].m[g]=(cells[i].m[g]||0)+v;(cells[i].dn[g]=cells[i].dn[g]||new Set()).add(r['日期'])});total+=v;days.add(r['日期']);(o.top?o.top(r):[]).forEach(t=>{cnt[t]=(cnt[t]||0)+1})});
+  if(monthly&&!o.months&&o.avg)cells.forEach(c=>Object.keys(c.m).forEach(g=>{c.m[g]=c.m[g]/(c.dn[g].size||1)}));   /* 數值類:月份內每天平均 */
+  const rg=o.months?rgChips([['12','近12個月'],['all','全部']],all?'all':'12'):rgChips([['7','7天'],['14','14天'],['30','30天'],['90','90天'],['all','全部']],all?'all':String(f.rg||14));
+  const ttl=title+(monthly&&!o.months&&o.avg?'(月平均)':'');
+  if(!total)return panel(key,ttl,rg,nodata('這段期間還沒有資料'));
   const segs=cells.map(c=>({label:c.label,segs:grp.map((g,i)=>({n:g,v:c.m[g]||0,c:o.gcol(g,i)})).filter(x=>x.v>0)}));
   const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,6);
   const body=barSVG(segs,o.unit)+(grp.length>1||o.alwaysLegend?legend(grp.map((g,i)=>[g,o.gcol(g,i)])):'')
-    +`<div class="note" style="margin-top:6px">${o.stat(total,withData.size,grp.length)}</div>`
+    +`<div class="note" style="margin-top:6px">${o.stat(total,days.size,grp.length)}</div>`
     +(top.length?`<div class="card-h" style="margin:8px 0 0">${top.map(t=>`<span class="tag">${esc(t[0])} ×${t[1]}</span>`).join('')}</div>`:'');
-  return panel(key,title,rg,body);
+  return panel(key,ttl,rg,body);
 }
 function chartHTML(key,rows){
   const f=UI.f[key]||(UI.f[key]={});
   if(key==='vitals')return vitalsChart(rows,f);
-  if(key==='diet'){const C=(t,k,u,un)=>barPanel(key,t,rows,f,{val:r=>numOf(r[k]),grp:r=>r['姓名'],gcol:(n,i)=>PAL[i%PAL.length],unit:un,stat:(a,d,g)=>g===1?`平均 ${nf(a/d)} ${u}/天(有記錄的 ${d} 天)`:`區間合計 ${nf(a)} ${u}`});
+  if(key==='diet'){const C=(t,k,u,un)=>barPanel(key,t,rows,f,{val:r=>numOf(r[k]),grp:r=>r['姓名'],gcol:(n,i)=>PAL[i%PAL.length],unit:un,avg:1,stat:(a,d,g)=>g===1?`平均 ${nf(a/d)} ${u}/天(有記錄的 ${d} 天)`:`區間合計 ${nf(a)} ${u}`});
     return C('每日飲水 ml','飲水','ml',' ml')+C('每日睡眠時數','睡眠時數','小時',' 小時')+C('每日運動分鐘','運動分鐘','分鐘',' 分')}
   if(key==='meds')return barPanel(key,'每日用藥次數',rows,f,{val:()=>1,grp:r=>bigsOf(r),gcol:n=>pcol(n),unit:' 次',alwaysLegend:1,top:r=>r['藥品']?[r['藥品']]:[],stat:t=>`區間共用藥 ${t} 次`});
   if(key==='symptoms')return barPanel(key,'每日症狀紀錄數',rows,f,{val:()=>1,grp:r=>bigsOf(r),gcol:n=>pcol(n),unit:' 筆',alwaysLegend:1,top:r=>String(r['症狀']||'').split('、').filter(Boolean).map(e=>parseSym(e)[0]),stat:(t,d)=>`區間共 ${t} 筆,${d} 天有症狀`});
-  if(key==='visits')return barPanel(key,'每月就診次數(近 12 個月)',rows,f,{months:1,val:()=>1,grp:r=>bigsOf(r),gcol:n=>pcol(n),unit:' 次',alwaysLegend:1,top:r=>r['醫院名稱']?[r['醫院名稱']]:[],stat:t=>`近 12 個月就診 ${t} 次`});
+  if(key==='visits')return barPanel(key,'每月就診次數('+(String(f.rg)==='all'?'全部':'近 12 個月')+')',rows,f,{months:1,val:()=>1,grp:r=>bigsOf(r),gcol:n=>pcol(n),unit:' 次',alwaysLegend:1,top:r=>r['醫院名稱']?[r['醫院名稱']]:[],stat:t=>`${String(f.rg)==='all'?'全部期間':'近 12 個月'}就診 ${t} 次`});
   return '';
 }
 function ckChart(whos,f){
