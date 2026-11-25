@@ -63,6 +63,8 @@ input[readonly]{background:#101012;color:var(--mut)}
 .tag .ic{width:16px;height:16px;vertical-align:middle}
 .tag.part{font-weight:700}
 .tag.sv{background:transparent;border:1px solid;font-weight:700}
+.ckl,.kv,.blk{background-image:linear-gradient(transparent 38%,rgba(255,92,150,.26) 38%,rgba(255,92,150,.26) 94%,transparent 94%);background-repeat:no-repeat;background-size:0% 100%;transition:background-size .35s ease;cursor:pointer;border-radius:3px;-webkit-tap-highlight-color:transparent}
+.ckl:hover,.kv:hover,.blk:hover,.ckl:active,.kv:active,.blk:active,.ckl.hls,.kv.hls,.blk.hls{background-size:100% 100%}
 .kvs{display:flex;flex-wrap:wrap;gap:6px 16px}
 .en{color:inherit;font-weight:400;font-size:12px;margin-left:6px}
 .blks{margin-top:6px}
@@ -259,7 +261,7 @@ function toothPanel(c,mode,ro){
   const TC=perm?['#d4b483','#ffb347','#ff6b81','#5eead4','#4cc3ff','#5b9dff','#b78cff','#c084fc']:['#d4b483','#ffb347','#ff6b81','#4cc3ff','#5b9dff'];
   const xs=[];let acc=0;ws.forEach(w=>{xs.push(acc+w/2);acc+=w+2});
   const k=88/(xs[xs.length-1]*xs[xs.length-1]);
-  let g=`<text x="180" y="16" text-anchor="middle" fill="#d4b483" font-weight="700" font-size="13">上面</text><text x="180" y="330" text-anchor="middle" fill="#d4b483" font-weight="700" font-size="13">下面</text><text x="12" y="172" fill="#8d8a84" font-size="12">孩子的右</text><text x="348" y="172" text-anchor="end" fill="#8d8a84" font-size="12">孩子的左</text><text x="180" y="176" text-anchor="middle" fill="#6a6862" font-size="11">(面對孩子看)</text>`;
+  let g=`<text x="180" y="16" text-anchor="middle" fill="#d4b483" font-weight="700" font-size="13">上面</text><text x="180" y="330" text-anchor="middle" fill="#d4b483" font-weight="700" font-size="13">下面</text><text x="12" y="172" fill="#8d8a84" font-size="12">受檢者的右</text><text x="348" y="172" text-anchor="end" fill="#8d8a84" font-size="12">受檢者的左</text><text x="180" y="176" text-anchor="middle" fill="#6a6862" font-size="11">(面對受檢者看)</text>`;
   ['上面','下面'].forEach(pos=>{
     const up=pos==='上面';
     [-1,1].forEach(side=>{
@@ -278,7 +280,7 @@ function toothPanel(c,mode,ro){
     const a=AGE_BABY[nm];return `<tr><td>${i+1} ${nm}</td><td>長出 ${a[0][0]}<br>脫落 ${a[0][1]}</td><td>長出 ${a[1][0]}<br>脫落 ${a[1][1]}</td></tr>`;
   }).join('');
   if(ro)return `<div style="max-width:330px;margin:8px 0 2px"><svg viewBox="0 0 360 336" width="100%" role="img">${g.replace(/ data-tt="1"[^>]*style="cursor:pointer"/g,'')}</svg></div>`;
-  return `<div class="card" style="margin:6px 0 10px"><div class="ch"><b>牙齒圖</b><span class="chips"><button type="button" class="chip sm ${perm?'on':''}" data-tm="恆牙">恆牙(第二次)</button><button type="button" class="chip sm ${perm?'':'on'}" data-tm="乳牙">乳牙(第一次)</button></span></div><div class="note" style="margin:0 0 6px">點圖上的牙齒就會自動選好;數字是從中間往兩邊數第幾顆</div><svg viewBox="0 0 360 336" width="100%" role="img">${g}</svg><div class="tbl" style="margin-top:8px"><table><tr><th>牙齒</th><th>上排${perm?'長出':''}</th><th>下排${perm?'長出':''}</th></tr>${rows}</table></div><div class="note">年齡只是大概,每個孩子不太一樣。乳牙(第一次長出)脫落後,恆牙(第二次)才會長出來。</div></div>`;
+  return `<div class="card" style="margin:6px 0 10px"><div class="ch"><b>牙齒圖</b><span class="chips"><button type="button" class="chip sm ${perm?'on':''}" data-tm="恆牙">恆牙(第二次)</button><button type="button" class="chip sm ${perm?'':'on'}" data-tm="乳牙">乳牙(第一次)</button></span></div><div class="note" style="margin:0 0 6px">點圖上的牙齒就會自動選好;數字是從中間往兩邊數第幾顆</div><svg viewBox="0 0 360 336" width="100%" role="img">${g}</svg><div class="tbl" style="margin-top:8px"><table><tr><th>牙齒</th><th>上排${perm?'長出':''}</th><th>下排${perm?'長出':''}</th></tr>${rows}</table></div><div class="note">年齡只是大概,每個人的進度不太一樣。乳牙(第一次長出)脫落後,恆牙(第二次)才會長出來。</div></div>`;
 }
 const EYE=['眨眼','飄眼','眼睛癢','紅腫','流淚','眼屎多','視力模糊','怕光'];
 const LIMB=['扭傷','麻','痠痛','腫脹','瘀青','無力','抽筋'];
@@ -1328,6 +1330,7 @@ const autoPull=()=>{if(!cfg.url||flushing||Q.length||document.hidden||!$('#modal
 document.addEventListener('visibilitychange',autoPull);window.addEventListener('focus',autoPull);
 setInterval(autoPull,60000);
 
+document.addEventListener('click',e=>{const t=e.target.closest('.ckl,.kv,.blk');if(t&&!e.target.closest('button,a,input,select,textarea,label'))t.classList.toggle('hls')});
 setSlogan();
 setInterval(setSlogan,300000);document.addEventListener('visibilitychange',setSlogan);window.addEventListener('focus',setSlogan);
 render();
