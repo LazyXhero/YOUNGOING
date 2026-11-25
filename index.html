@@ -63,13 +63,14 @@ input[readonly]{background:#101012;color:var(--mut)}
 .tag .ic{width:16px;height:16px;vertical-align:middle}
 .tag.part{font-weight:700}
 .tag.sv{background:transparent;border:1px solid;font-weight:700}
-.ckl,.kv,.blk{cursor:pointer;border-radius:3px;-webkit-tap-highlight-color:transparent}
-.ckl:hover,.kv:hover,.blk:hover,.ckl:active,.kv:active,.blk:active,.ckl.hls,.kv.hls,.blk.hls{background-image:linear-gradient(transparent 40%,rgba(255,92,150,.16) 40%,rgba(255,92,150,.16) 92%,transparent 92%)}
+.ckl,.kv,.blk{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.kv,.ckl .n>span,.ckl .v,.blk>i,.blk .tx{border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.kv:hover,.kv:active,.kv.hls,.ckl:hover .n>span,.ckl:hover .v,.ckl:active .n>span,.ckl:active .v,.ckl.hls .n>span,.ckl.hls .v,.blk:hover >i,.blk:hover .tx,.blk:active >i,.blk:active .tx,.blk.hls >i,.blk.hls .tx{background-image:linear-gradient(transparent 40%,rgba(255,92,150,.16) 40%,rgba(255,92,150,.16) 92%,transparent 92%)}
 .kvs{display:flex;flex-wrap:wrap;gap:6px 16px}
 .en{color:inherit;font-weight:400;font-size:12px;margin-left:6px}
 .blks{margin-top:6px}
 .blk{display:flex;gap:10px;padding:6px 0;border-top:1px solid var(--line)}
-.blk>i{flex:none;max-width:55%}
+.blk>i{flex:none;max-width:55%;align-self:flex-start}
 .blk>.bt{flex:1;min-width:0}
 .blk:first-child{border-top:0}
 .blk>i{font-style:normal;color:var(--pri);font-weight:700}
@@ -635,7 +636,7 @@ function cardHTML(key,r,tagged){
       if(key==='meds'&&(f.k==='藥品'||f.k==='劑量'))continue;
       if(key==='visits'&&f.k==='醫院名稱')continue;
       const v=r[f.k];if(v===undefined||v==='')continue;
-      if(f.t==='text'||f.t==='area')blk.push(`<div class="blk"><i>${L2(f.k)}</i><div class="bt">${esc(v)}</div></div>`);
+      if(f.t==='text'||f.t==='area')blk.push(`<div class="blk"><i>${L2(f.k)}</i><div class="bt"><span class="tx">${esc(v)}</span></div></div>`);
       else kv.push(`<span class="kv"><i>${L2(f.k)}</i>${esc(v)}${f.u?' '+f.u:''}</span>`);
     }
     body=(kv.length?`<div class="kvs">${kv.join('')}</div>`:'')+(blk.length?`<div class="blks">${blk.join('')}</div>`:'')+(r['備註']?`<div class="note">${esc(r['備註'])}</div>`:'');
